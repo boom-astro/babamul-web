@@ -21,7 +21,12 @@ export function loadAladinScript(): Promise<void> {
     script.src = 'https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.js';
     script.async = true; // Load asynchronously
     script.onload = () => {
-      resolve();
+      // Wait for Aladin internal initialization
+      if (window.A && window.A.init) {
+        window.A.init.then(() => resolve()).catch(reject);
+      } else {
+        reject(new Error('Aladin A.init not available'));
+      }
     };
     script.onerror = () => {
       aladinLoadPromise = null; // Reset so it can be retried
