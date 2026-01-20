@@ -62,6 +62,7 @@ type CandidateData = {
   prv_candidates?: Detection[];
   prv_nondetections?: Detection[];
   survey_matches?: Record<string, { object_id?: string; distance_arcsec?: number }>;
+  cross_matches?: Record<string, Array<{ ra?: number; dec?: number; score?: number; distance_arcsec?: number }>>;
 };
 
 function mjd_to_utc(mjd: number) {
@@ -83,6 +84,14 @@ export function ClassificationBadges({
 }) {
   const classifications = data.classifications ?? {};
   const properties = data.properties ?? {};
+  
+  // Check LSPSC cross_matches for stellar/hosted classification
+  const lspscMatches = data.cross_matches?.LSPSC ?? [];
+  const hasLspscStellar = lspscMatches.some(
+    (m) => (m.distance_arcsec ?? Infinity) < 1 && (m.score ?? 0) > 0.5
+  );
+  const hasLspscHosted = lspscMatches.some((m) => (m.score ?? 1) < 0.5);
+  
   return (
     <div className="flex flex-row flex-wrap gap-2">
       {(data.candidate?.drb ?? 1) < 0.2 && (
@@ -105,9 +114,14 @@ export function ClassificationBadges({
           SN?
         </Badge>
       )}
-      {properties?.star && (
+      {(properties?.star || hasLspscStellar) && (
         <Badge variant="outline" className="text-sm font-semibold">
-          Stellar
+          Stellar?
+        </Badge>
+      )}
+      {!hasLspscStellar && hasLspscHosted && (
+        <Badge variant="outline" className="text-sm font-semibold">
+          Hosted?
         </Badge>
       )}
     </div>
@@ -211,6 +225,11 @@ export default function Header({
     const templateImage = bytes2image(data.cutout_template, survey, "template", colorMap);
     const differenceImage = bytes2image(data.cutout_difference, survey, "difference", colorMap);
 
+    const firstTime = first_det?.jd ? mjd_to_utc(jd_to_mjd(first_det.jd)).replace("T", ' ').replace("Z", "") : "-";
+    const peakTime = peak_det?.jd ? mjd_to_utc(jd_to_mjd(peak_det.jd)).replace("T", ' ').replace("Z", "") : "-";
+    const lastTime = last_det?.jd ? mjd_to_utc(jd_to_mjd(last_det.jd)).replace("T", ' ').replace("Z", "") : "-";
+    const bandSummary = band === "all" ? "Showing all bands" : `Showing ${band}-band only`;
+
     function openLightbox() {
       setLightboxOpen(true);
     }
@@ -248,77 +267,122 @@ export default function Header({
                 <span className="absolute top-2 left-2 bg-black/60 text-white text-sm px-3 py-1 rounded-md backdrop-blur-sm opacity-100 group-hover:opacity-0 transition-opacity duration-150 pointer-events-none">Difference</span>
               </div>
             </div>
-            <div className="rounded-lg shadow-sm w-full border">
-            <table className="min-w-full rounded-lg">
-              <thead>
-                <tr>
-                  <th className="py-3 px-4 text-left font-medium">
-                    <Select value={band} onValueChange={(v) => setBand(v)}>
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Band(s)" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All bands</SelectItem>
-                        <SelectItem value="r">R-band</SelectItem>
-                        <SelectItem value="g">G-band</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </th>
-                  <th className="py-3 px-4 text-left font-medium">Age</th>
-                  <th className="py-3 px-4 text-left font-medium">Nb Detections</th>
-                  <th className="py-3 px-4 text-left font-medium">Nb Non Detections</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                <tr>
-                  <td className="py-4 px-4 font-medium">{band === "all" ? "Showing all bands" : <span className="text-orange-500">Showing {band}-band only</span>}</td>
-                  <td className="py-4 px-4 font-medium">{age} days</td>
-                  <td className="py-4 px-4 font-medium">{nb_detections}</td>
-                  <td className="py-4 px-4 font-medium">{nb_nondetections}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+            <div className="rounded-lg shadow-sm w-full border overflow-hidden">
+              <div className="hidden sm:block overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr>
+                      <th className="py-3 px-3 sm:px-4 text-left font-medium">
+                        <Select value={band} onValueChange={(v) => setBand(v)}>
+                          <SelectTrigger className="w-auto whitespace-nowrap xl:w-[180px]">
+                            <SelectValue placeholder="Band(s)" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All bands</SelectItem>
+                            <SelectItem value="r">R-band</SelectItem>
+                            <SelectItem value="g">G-band</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </th>
+                      <th className="py-3 px-3 sm:px-4 text-left font-medium">Age</th>
+                      <th className="py-3 px-3 sm:px-4 text-left font-medium">Nb Detections</th>
+                      <th className="py-3 px-3 sm:px-4 text-left font-medium">Nb Non Detections</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    <tr>
+                      <td className="py-4 px-3 sm:px-4 font-medium">{band === "all" ? "Showing all bands" : <span className="text-orange-500">Showing {band}-band only</span>}</td>
+                      <td className="py-4 px-3 sm:px-4 font-medium">{age} days</td>
+                      <td className="py-4 px-3 sm:px-4 font-medium">{nb_detections}</td>
+                      <td className="py-4 px-3 sm:px-4 font-medium">{nb_nondetections}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div className="grid gap-3 p-4 sm:hidden text-sm">
+                <Select value={band} onValueChange={(v) => setBand(v)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Band(s)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All bands</SelectItem>
+                    <SelectItem value="r">R-band</SelectItem>
+                    <SelectItem value="g">G-band</SelectItem>
+                  </SelectContent>
+                </Select>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                  <span className="text-muted-foreground">Band</span>
+                  <span className={`font-medium ${band === "all" ? "" : "text-orange-500"}`}>{bandSummary}</span>
+                  <span className="text-muted-foreground">Age</span>
+                  <span className="font-medium">{age} days</span>
+                  <span className="text-muted-foreground">Detections</span>
+                  <span className="font-medium">{nb_detections}</span>
+                  <span className="text-muted-foreground">Non Detections</span>
+                  <span className="font-medium">{nb_nondetections}</span>
+                </div>
+              </div>
+            </div>
 
-          <div className="rounded-lg shadow-sm w-full border">
-            <table className="min-w-full rounded-lg">
-              <thead>
-                <tr>
-                  <th className="py-3 px-4 text-left font-medium">Measurement</th>
-                  <th className="py-3 px-4 text-left font-medium">Time (UTC)</th>
-                  <th className="py-3 px-4 text-left font-medium">Magnitude</th>
-                  {(!band || band === "all") && (
-                    <th className="py-3 px-4 text-left font-medium">Band</th>
-                  )}
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                <tr>
-                  <td className="py-4 px-4 font-medium">First Detection</td>
-                  <td className="py-4 px-4">{first_det?.jd ? mjd_to_utc(jd_to_mjd(first_det.jd)).replace("T", ' ').replace("Z", "") : "-"}</td>
-                  <td className="py-4 px-4">{formatDetection(first_det)}</td>
-                  {(!band || band === "all") && (
-                    <td className="py-4 px-4">{first_det?.band || "-"}</td>
-                  )}
-                </tr>
-                <tr>
-                  <td className="py-4 px-4 font-medium">Peak Detection</td>
-                  <td className="py-4 px-4">{peak_det?.jd ? mjd_to_utc(jd_to_mjd(peak_det.jd)).replace("T", ' ').replace("Z", "") : "-"}</td>
-                  <td className="py-4 px-4">{formatDetection(peak_det)}</td>
-                  {(!band || band === "all") && (
-                    <td className="py-4 px-4">{peak_det?.band || "-"}</td>
-                  )}
-                </tr>
-                <tr>
-                  <td className="py-4 px-4 font-medium">Last Detection</td>
-                  <td className="py-4 px-4">{last_det?.jd ? mjd_to_utc(jd_to_mjd(last_det.jd)).replace("T", ' ').replace("Z", "") : "-"}</td>
-                  <td className="py-4 px-4">{formatDetection(last_det)}</td>
-                  {(!band || band === "all") && (
-                    <td className="py-4 px-4">{last_det?.band || "-"}</td>
-                  )}
-                </tr>
-              </tbody>
-            </table>
+          <div className="rounded-lg shadow-sm w-full border overflow-hidden">
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr>
+                    <th className="py-3 px-3 sm:px-4 text-left font-medium">Measurement</th>
+                    <th className="py-3 px-3 sm:px-4 text-left font-medium">Time (UTC)</th>
+                    <th className="py-3 px-3 sm:px-4 text-left font-medium">Magnitude</th>
+                    {(!band || band === "all") && (
+                      <th className="py-3 px-3 sm:px-4 text-left font-medium">Band</th>
+                    )}
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  <tr>
+                    <td className="py-4 px-3 sm:px-4 font-medium">First Detection</td>
+                    <td className="py-4 px-3 sm:px-4">{firstTime}</td>
+                    <td className="py-4 px-3 sm:px-4">{formatDetection(first_det)}</td>
+                    {(!band || band === "all") && (
+                      <td className="py-4 px-3 sm:px-4">{first_det?.band || "-"}</td>
+                    )}
+                  </tr>
+                  <tr>
+                    <td className="py-4 px-3 sm:px-4 font-medium">Peak Detection</td>
+                    <td className="py-4 px-3 sm:px-4">{peakTime}</td>
+                    <td className="py-4 px-3 sm:px-4">{formatDetection(peak_det)}</td>
+                    {(!band || band === "all") && (
+                      <td className="py-4 px-3 sm:px-4">{peak_det?.band || "-"}</td>
+                    )}
+                  </tr>
+                  <tr>
+                    <td className="py-4 px-3 sm:px-4 font-medium">Last Detection</td>
+                    <td className="py-4 px-3 sm:px-4">{lastTime}</td>
+                    <td className="py-4 px-3 sm:px-4">{formatDetection(last_det)}</td>
+                    {(!band || band === "all") && (
+                      <td className="py-4 px-3 sm:px-4">{last_det?.band || "-"}</td>
+                    )}
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div className="grid gap-3 p-4 sm:hidden text-sm">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                <span className="text-muted-foreground">First Detection</span>
+                <span className="font-medium flex flex-col">
+                  <span>{firstTime}</span>
+                  <span className="text-muted-foreground">{formatDetection(first_det)}; {first_det?.band}-band</span>
+                </span>
+                <span className="text-muted-foreground">Peak Detection</span>
+                <span className="font-medium flex flex-col">
+                  <span>{peakTime}</span>
+                  <span className="text-muted-foreground">{formatDetection(peak_det)}; {peak_det?.band}-band</span>
+                </span>
+                <span className="text-muted-foreground">Last Detection</span>
+                <span className="font-medium flex flex-col">
+                  <span>{lastTime}</span>
+                  <span className="text-muted-foreground">{formatDetection(last_det)}; {last_det?.band}-band</span>
+                </span>
+              </div>
+            </div>
           </div>
         </CardContent>
         <CardFooter className="flex flex-row justify-between">

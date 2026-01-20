@@ -17,16 +17,16 @@ export default function CrossmatchCard() {
 
   const crossMatches = current?.data?.cross_matches ?? {};
 
-  const catalogs = useMemo(() => {
-    // produce sorted array of [catalogName, matches[]] with catalogs having matches first
+  const { catalogs, firstNonEmpty } = useMemo(() => {
     const entries = Object.entries(crossMatches || {});
     entries.sort((a, b) => {
-      const al = Array.isArray(a[1]) ? a[1].length : 0;
-      const bl = Array.isArray(b[1]) ? b[1].length : 0;
-      if (al !== bl) return bl - al; // more matches first
-      return a[0].localeCompare(b[0]);
+      const aHas = Array.isArray(a[1]) && a[1].length > 0;
+      const bHas = Array.isArray(b[1]) && b[1].length > 0;
+      if (aHas !== bHas) return aHas ? -1 : 1; // catalogs with matches first
+      return a[0].localeCompare(b[0]); // alphabetically within each group
     });
-    return entries;
+    const first = entries.find(([, matches]) => Array.isArray(matches) && matches.length > 0)?.[0];
+    return { catalogs: entries, firstNonEmpty: first };
   }, [crossMatches]);
 
   if (!current) return null;
@@ -42,7 +42,7 @@ export default function CrossmatchCard() {
         )}
 
         {catalogs.length > 0 && (
-          <Accordion type="single" collapsible className="w-full">
+          <Accordion type="single" collapsible className="w-full" defaultValue={firstNonEmpty || undefined}>
             {catalogs.map(([cat, matches]) => {
               const list = Array.isArray(matches) ? matches : [];
               const disabled = list.length === 0;
@@ -73,13 +73,9 @@ export default function CrossmatchCard() {
               return (
                 <AccordionItem key={cat} value={cat} className={`rounded-md ${disabled ? 'opacity-40' : ''}`}>
                   <AccordionTrigger disabled={disabled} className="font-medium">
-                    <div className="flex items-center justify-between w-full">
-                      <div className="flex items-center gap-3">
-                        <div className="font-semibold">{cat}</div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Badge variant="outline" className="text-xs">{list.length}</Badge>
-                      </div>
+                    <div className="flex w-full items-center gap-3">
+                      <div className="font-semibold">{cat}</div>
+                      <Badge variant="outline" className="text-xs">{list.length} match{list.length !== 1 ? 'es' : ''}</Badge>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent>

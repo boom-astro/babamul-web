@@ -31,7 +31,7 @@ const plotHeight = height - padding.top - padding.bottom;
 
 // --- Types ---
 type EpochEntry = { epoch: number; score?: number; date?: string; classes?: Record<string, number> };
-type ClassifierEntry = { name: string; score: number; history: EpochEntry[]; isStatic?: boolean; separation?: number };
+type ClassifierEntry = { name: string; score: number; history: EpochEntry[]; isStatic?: boolean; separation?: number, description?: string | undefined };
 type BinaryFamilies = Record<string, ClassifierEntry[]>;
 type MulticlassData = { name: string; classes: Record<string, number>; history: EpochEntry[] };
 
@@ -180,6 +180,7 @@ type AlertLike = {
   classifications?: Record<string, number>;
   candidate?: { drb?: number; sgscore1?: number; distpsnr1?: number };
   classifications_history?: Record<string, number>[];
+  cross_matches?: Record<string, Array<{ ra?: number; dec?: number; score?: number, distance_arcsec?: number }>>;
 };
 
 function mapAlertClassifications(alert: unknown): MapAlertResult {
@@ -248,6 +249,24 @@ function mapAlertClassifications(alert: unknown): MapAlertResult {
     ];
   }
 
+  // Add LSPSC classifier from cross_matches if available
+  if (a.cross_matches?.LSPSC && Array.isArray(a.cross_matches.LSPSC) && a.cross_matches.LSPSC.length > 0) {
+    const lspscMatches = a.cross_matches.LSPSC.filter((m) => m.ra !== undefined && m.dec !== undefined && m.score !== undefined);
+    if (lspscMatches.length > 0) {
+      const nearestMatch = lspscMatches[0];
+      mapped.binary['LSPSC'] = [
+        {
+          name: 'LSPSC',
+          score: nearestMatch.score ?? 0,
+          isStatic: true,
+          history: [],
+          separation: nearestMatch.distance_arcsec,
+          description: `High score + small separation indicate a likely star; a low score indicates a likely a galaxy.`
+        },
+      ];
+    }
+  }
+
   return mapped;
 }
 
@@ -272,31 +291,24 @@ const detectAnomalies = (allClassifiers: BinaryFamilies) => {
   return anomalies;
 };
 
-const CompactHeatmap = ({ name, score, showTrend, history, isStatic, separation }: { name: string; score: number; showTrend?: boolean; history: EpochEntry[]; isStatic?: boolean; separation?: number }) => {
+const CompactHeatmap = ({ name, score, showTrend, history, isStatic, separation, description }: { name: string; score: number; showTrend?: boolean; history: EpochEntry[]; isStatic?: boolean; separation?: number; description?: string }) => {
   const bgColor = score > 0.7 ? 'bg-green-500' : score > 0.4 ? 'bg-yellow-500' : 'bg-red-500';
   const trend = history && history.length > 1 ? (history[history.length - 1].score ?? 0) - (history[0].score ?? 0) : 0;
   const TrendIcon = trend > 0.1 ? TrendingUp : trend < -0.1 ? TrendingDown : Minus;
   const trendColor = trend > 0.1 ? 'text-green-100' : trend < -0.1 ? 'text-red-100' : 'text-white/60';
-  
-  return (
-    <div className={`${bgColor} text-white p-3 rounded-lg relative space-between flex flex-col h-full`}>
+  const hasTooltipContent = description || isStatic;
+
+  const content = (
+    <div className={`${bgColor} text-white p-3 rounded-lg relative space-between flex flex-col h-full ${hasTooltipContent ? 'cursor-help' : ''}`}>
       <div className="flex items-start justify-between mb-1.5">
         <div className="text-sm font-semibold truncate flex-1 pr-2">{name}</div>
         {showTrend && history && history.length > 1 && !isStatic && (
           <TrendIcon className={`w-3.5 h-3.5 flex-shrink-0 ${trendColor}`} />
         )}
         {isStatic && (
-            // <Tooltip content="This score comes from another catalog (by spatial matching) and does not change over time.">
-            <Tooltip>
-                <TooltipTrigger className="absolute top-1.5 right-1.5 px-1.5 py-0">
-                    <Badge variant="secondary" className="text-xs bg-white/20 text-white border-0">
-                        Static
-                    </Badge>
-                </TooltipTrigger>
-                <TooltipContent>
-                This score comes from another catalog (by spatial matching) and does not change over time.
-                </TooltipContent>
-            </Tooltip>
+            <Badge variant="secondary" className="text-xs bg-white/20 text-white border-0 absolute top-1.5 right-1.5">
+                Static
+            </Badge>
         )}
       </div>
       <div className="flex items-end justify-between">
@@ -308,6 +320,24 @@ const CompactHeatmap = ({ name, score, showTrend, history, isStatic, separation 
         )}
       </div>
     </div>
+  );
+
+  if (!hasTooltipContent) {
+    return content;
+  }
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        {content}
+      </TooltipTrigger>
+      <TooltipContent className="max-w-xs">
+        <div className="text-sm space-y-2">
+          {isStatic && <p>Static score (from spatial catalog matching).</p>}
+          {description && <p className="text-sm text-gray-500">Description: {description}</p>}
+        </div>
+      </TooltipContent>
+    </Tooltip>
   );
 };
 
