@@ -759,7 +759,7 @@ export default function Lightcurve({ data }: { data: LightcurveData }) {
                             <div>
                                 <h3 className="font-semibold mb-2">What This Plot Shows</h3>
                                 <p className="text-gray-600 dark:text-gray-300">
-                                    This plot displays the brightness history of the astronomical object over time. The X-axis shows Modified Julian Date (MJD), 
+                                    This plot displays the brightness history of the astronomical object over time, including previous alerts, forced photometry, and non-detections. The X-axis shows Modified Julian Date (MJD), 
                                     and the Y-axis shows the AB magnitude (note: fainter objects have higher magnitude values, so the Y-axis is inverted).
                                     It takes advantage of data from multiple surveys to provide a comprehensive view of the object's photometric behavior,
                                     if available. We will refer to the survey from which the object originates as the "primary" survey, and any additional data from other surveys as "other surveys".
