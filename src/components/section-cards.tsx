@@ -26,10 +26,10 @@ export function SectionCards({data}: {data: ApiObject | null}) {
       {/* <LightcurveCanvas data={data} /> */}
       {/* <Classifications alert={data} /> */}
       {/* <PeriodFinding data={data} /> */}
-      <CentroidPlot />
-      {/* <Aladin alert={data} /> */}
       <ClassifierDisplay alert={data} />
+      <Aladin alert={data} />
       <CrossmatchCard />
+      <CentroidPlot />
       {/* <ClassificationsHistory alert={data} /> */}
     </div>
   )

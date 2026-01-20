@@ -773,18 +773,7 @@ const ClassifierDisplay = ({ alert }: { alert?: unknown }) => {
   
   return (
     <>
-      {/* <Card className="@container/card col-span-1 row-span-2"> */}
       <Card className="@container/card col-span-1 h-full bg-card text-card-foreground flex flex-col">
-        {/* <CardHeader className="pt-0 pb-0">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">ML Classifiers</CardTitle>
-            {totalEpochs > 0 && (
-              <Badge variant="outline" className="text-xs">
-                {totalEpochs} epochs
-              </Badge>
-            )}
-          </div>
-        </CardHeader> */}
         <CardContent className="space-y-4 pt-0 flex-1 flex flex-col min-h-0">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg">ML Classifiers</CardTitle>

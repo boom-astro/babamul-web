@@ -137,9 +137,39 @@ export default function Lightcurve({ data }: { data: LightcurveData }) {
     const [domain, setDomain] = useState(initialDomain);
     useEffect(() => setDomain(initialDomain), [initialDomain.x0, initialDomain.x1, initialDomain.y0, initialDomain.y1]);
 
-    // hover state from legend (same semantics as centroid plot)
-    const [hoveredBand, setHoveredBand] = useState<string | null>(null);
+    const [hiddenBands, setHiddenBands] = useState<Set<string>>(new Set());
     const [dialogOpen, setDialogOpen] = useState(false);
+
+    const handleLegendClick = (band: string) => {
+        setHiddenBands(prev => {
+            const next = new Set(prev);
+            if (next.has(band)) {
+                next.delete(band);
+            } else {
+                next.add(band);
+            }
+            return next;
+        });
+    };
+
+    const handleLegendDoubleClick = (band: string) => {
+        const visibleBands = bands.filter(b => !hiddenBands.has(b));
+        if (visibleBands.length === 1 && visibleBands[0] === band) {
+            // reset to show all bands
+            setHiddenBands(new Set());
+        } else {
+            // Hide all bands except this one
+            setHiddenBands(new Set(bands.filter(b => b !== band)));
+        }
+    };
+
+    // helper to get band state
+    const getBandState = (band: string | undefined) => {
+        const bandKey = String(band ?? 'default').toLowerCase();
+        const isHidden = hiddenBands.has(bandKey);
+        const color = toColor(band);
+        return { bandKey, isHidden, color };
+    };
 
     // sizing
     const containerRef = useRef<HTMLDivElement | null>(null);
@@ -318,28 +348,24 @@ export default function Lightcurve({ data }: { data: LightcurveData }) {
     // (no additional helpers needed right now)
 
     return (
-        <>
-        <Card className="@container/card col-span-2 lg:col-span-2">
+        <Card className="@container/card col-span-1 @xl/main:col-span-2">
             <CardContent>
                 <div ref={containerRef} style={{ width: '100%', height: '36vh', marginBottom: 20, position: 'relative'}}>
                     <div className="flex items-center justify-between">
                         <div className="text-sm font-medium pb-2">Photometry</div>
                         <div className="flex items-center gap-3">
-                            {bands.map(b => {
-                                const isActiveLegend = !hoveredBand || hoveredBand === b;
-                                return (
+                            {bands.map(b =>
                                 <div
                                     key={`legend-${b}`}
                                     className="flex items-center gap-2 text-xs cursor-pointer select-none"
-                                    onMouseEnter={() => setHoveredBand(b)}
-                                    onMouseLeave={() => setHoveredBand(null)}
-                                    style={{ opacity: isActiveLegend ? 1 : 0.12, transition: 'opacity 200ms ease' }}
+                                    onClick={() => handleLegendClick(b)}
+                                    onDoubleClick={() => handleLegendDoubleClick(b)}
+                                    style={{ opacity: hiddenBands.has(b) ? 0.12 : 1, transition: 'opacity 200ms ease' }}
                                 >
                                     <div className="w-3 h-3 rounded" style={{ backgroundColor: toColor(b) }} />
                                     <div className="text-xs text-gray-600 dark:text-gray-300">{b.toUpperCase()}</div>
                                 </div>
-                                );
-                            })}
+                            )}
                             {survey_matches && Object.keys(survey_matches).length > 0 && (
                                 <label className="flex items-center gap-2 text-xs cursor-pointer select-none px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-slate-700">
                                     <input 
@@ -403,30 +429,29 @@ export default function Lightcurve({ data }: { data: LightcurveData }) {
                         {/* points: detections - error bars with clipping */}
                         <g clipPath="url(#plot-area)" style={{ pointerEvents: 'none' }}>
                             {detections.map((pt, i) => {
+                                const { bandKey, isHidden, color } = getBandState(pt.band);
+                                if (isHidden) return null;
                                 const px = xToPixel(pt.t);
-                                const bandKey = String(pt.band ?? 'default').toLowerCase();
-                                const isActive = !hoveredBand || hoveredBand === bandKey;
                                 const sigma = Number(pt.sigma);
                                 const hasSigma = Number.isFinite(sigma) && sigma > 0;
-                                const color = toColor(pt.band);
                                 const capW = 6;
                                 return hasSigma ? (
                                     <g key={`errbar-${i}-${bandKey}`}>
-                                        <line x1={px} x2={px} y1={yToPixel(pt.mag - sigma)} y2={yToPixel(pt.mag + sigma)} stroke={color} strokeWidth={1.2} style={{ opacity: isActive ? 0.9 : 0.12, transition: 'opacity 200ms ease' }} />
-                                        <line x1={px - capW} x2={px + capW} y1={yToPixel(pt.mag - sigma)} y2={yToPixel(pt.mag - sigma)} stroke={color} strokeWidth={1.2} style={{ opacity: isActive ? 0.9 : 0.12, transition: 'opacity 200ms ease' }} />
-                                        <line x1={px - capW} x2={px + capW} y1={yToPixel(pt.mag + sigma)} y2={yToPixel(pt.mag + sigma)} stroke={color} strokeWidth={1.2} style={{ opacity: isActive ? 0.9 : 0.12, transition: 'opacity 200ms ease' }} />
+                                        <line x1={px} x2={px} y1={yToPixel(pt.mag - sigma)} y2={yToPixel(pt.mag + sigma)} stroke={color} strokeWidth={1.2} style={{ opacity: 0.9, transition: 'opacity 200ms ease' }} />
+                                        <line x1={px - capW} x2={px + capW} y1={yToPixel(pt.mag - sigma)} y2={yToPixel(pt.mag - sigma)} stroke={color} strokeWidth={1.2} style={{ opacity: 0.9, transition: 'opacity 200ms ease' }} />
+                                        <line x1={px - capW} x2={px + capW} y1={yToPixel(pt.mag + sigma)} y2={yToPixel(pt.mag + sigma)} stroke={color} strokeWidth={1.2} style={{ opacity: 0.9, transition: 'opacity 200ms ease' }} />
                                     </g>
                                 ) : null;
                             })}
 
                             {/* non-detections as downward triangles (main) or diamonds (survey) */}
                             {nondetectionsSeries.map((pt, i) => {
+                                const { bandKey, isHidden, color } = getBandState(pt.band);
+                                if (isHidden) return null;
                                 const px = xToPixel(pt.t);
                                 const py = yToPixel(pt.mag);
-                                const bandKey = String(pt.band ?? 'default').toLowerCase();
-                                const isActive = !hoveredBand || hoveredBand === bandKey;
                                 const isFromSurvey = pt.source === 'survey';
-                                const size = isActive ? 5 : 4;
+                                const size = 5;
                                 
                                 // Triangle for main, diamond for survey
                                 const path = isFromSurvey 
@@ -437,8 +462,8 @@ export default function Lightcurve({ data }: { data: LightcurveData }) {
                                     <polygon
                                         key={`nd-vis-${i}-${bandKey}`}
                                         points={path}
-                                        fill={toColor(pt.band)}
-                                        style={{ opacity: isActive ? 0.95 : 0.12, transition: 'opacity 200ms ease' }}
+                                        fill={color}
+                                        style={{ opacity: 0.95, transition: 'opacity 200ms ease' }}
                                     />
                                 );
                             })}
@@ -458,13 +483,12 @@ export default function Lightcurve({ data }: { data: LightcurveData }) {
 
                         {/* Interactive circles and polygons - rendered after overlay so they're on top */}
                         {detections.map((pt, i) => {
+                            const { bandKey, isHidden, color } = getBandState(pt.band);
+                            if (isHidden) return null;
                             const px = xToPixel(pt.t);
                             const py = yToPixel(pt.mag);
-                            const bandKey = String(pt.band ?? 'default').toLowerCase();
-                            const isActive = !hoveredBand || hoveredBand === bandKey;
-                            const color = toColor(pt.band);
                             const isFromSurvey = pt.source === 'survey';
-                            const size = isActive ? 4 : 2;
+                            const size = 4;
                             
                             return (
                                 <g key={`d-hit-${i}-${bandKey}`}>
@@ -501,7 +525,7 @@ export default function Lightcurve({ data }: { data: LightcurveData }) {
                                             width={size * 2}
                                             height={size * 2}
                                             fill={color}
-                                            style={{ opacity: isActive ? 1 : 0.12, transition: 'opacity 200ms ease', pointerEvents: 'none' }}
+                                            style={{ opacity: 0.9, transition: 'opacity 200ms ease', pointerEvents: 'none' }}
                                         />
                                     ) : (
                                         <circle
@@ -509,7 +533,7 @@ export default function Lightcurve({ data }: { data: LightcurveData }) {
                                             cy={py}
                                             r={size}
                                             fill={color}
-                                            style={{ opacity: isActive ? 1 : 0.12, transition: 'opacity 200ms ease, r 120ms ease', pointerEvents: 'none' }}
+                                            style={{ opacity: 0.9, transition: 'opacity 200ms ease, r 120ms ease', pointerEvents: 'none' }}
                                         />
                                     )}
                                 </g>
@@ -518,12 +542,12 @@ export default function Lightcurve({ data }: { data: LightcurveData }) {
 
                         {/* Interactive non-detection polygons */}
                         {nondetectionsSeries.map((pt, i) => {
+                            const { bandKey, isHidden, color } = getBandState(pt.band);
+                            if (isHidden) return null;
                             const px = xToPixel(pt.t);
                             const py = yToPixel(pt.mag);
-                            const bandKey = String(pt.band ?? 'default').toLowerCase();
-                            const isActive = !hoveredBand || hoveredBand === bandKey;
                             const isFromSurvey = pt.source === 'survey';
-                            const size = isActive ? 5 : 4;
+                            const size = 5;
                             
                             // Triangle for main, diamond for survey
                             const path = isFromSurvey 
@@ -560,8 +584,8 @@ export default function Lightcurve({ data }: { data: LightcurveData }) {
                                     {/* visible polygon */}
                                     <polygon
                                         points={path}
-                                        fill={toColor(pt.band)}
-                                        style={{ opacity: isActive ? 0.95 : 0.12, transition: 'opacity 200ms ease', pointerEvents: 'none' }}
+                                        fill={color}
+                                        style={{ opacity: 0.95, transition: 'opacity 200ms ease', pointerEvents: 'none' }}
                                     />
                                 </g>
                             );
@@ -587,10 +611,7 @@ export default function Lightcurve({ data }: { data: LightcurveData }) {
                         </div>
                     )}
                 </div>
-            </CardContent>
-        </Card>
-
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogContent className="w-[min(1400px,95vw)] max-w-none sm:!max-w-none h-[90vh] flex flex-col">
                 <DialogHeader>
                     <DialogTitle className="text-xl">Photometry - Expanded View</DialogTitle>
@@ -604,7 +625,6 @@ export default function Lightcurve({ data }: { data: LightcurveData }) {
                             const dialogH = 600;
                             const dialogPlotW = dialogW - dialogPad.left - dialogPad.right;
                             const dialogPlotH = dialogH - dialogPad.top - dialogPad.bottom;
-                            
                             const xToPixelDialog = (t: number) => dialogPad.left + ((t - domain.x0) / (domain.x1 - domain.x0)) * dialogPlotW;
                             const yToPixelDialog = (mag: number) => dialogPad.top + ((mag - domain.y0) / (domain.y1 - domain.y0)) * dialogPlotH;
 
@@ -643,29 +663,28 @@ export default function Lightcurve({ data }: { data: LightcurveData }) {
                                     {/* error bars */}
                                     <g clipPath="url(#plot-area-dialog)" style={{ pointerEvents: 'none' }}>
                                         {detections.map((pt, i) => {
+                                            const { bandKey, isHidden, color } = getBandState(pt.band);
+                                            if (isHidden) return null;
                                             const px = xToPixelDialog(pt.t);
-                                            const bandKey = String(pt.band ?? 'default').toLowerCase();
-                                            const isActive = !hoveredBand || hoveredBand === bandKey;
                                             const sigma = Number(pt.sigma);
                                             const hasSigma = Number.isFinite(sigma) && sigma > 0;
-                                            const color = toColor(pt.band);
                                             const capW = 8;
                                             return hasSigma ? (
                                                 <g key={`errbar-${i}-${bandKey}`}>
-                                                    <line x1={px} x2={px} y1={yToPixelDialog(pt.mag - sigma)} y2={yToPixelDialog(pt.mag + sigma)} stroke={color} strokeWidth={1.5} style={{ opacity: isActive ? 0.9 : 0.12, transition: 'opacity 200ms ease' }} />
-                                                    <line x1={px - capW} x2={px + capW} y1={yToPixelDialog(pt.mag - sigma)} y2={yToPixelDialog(pt.mag - sigma)} stroke={color} strokeWidth={1.5} style={{ opacity: isActive ? 0.9 : 0.12, transition: 'opacity 200ms ease' }} />
-                                                    <line x1={px - capW} x2={px + capW} y1={yToPixelDialog(pt.mag + sigma)} y2={yToPixelDialog(pt.mag + sigma)} stroke={color} strokeWidth={1.5} style={{ opacity: isActive ? 0.9 : 0.12, transition: 'opacity 200ms ease' }} />
+                                                    <line x1={px} x2={px} y1={yToPixelDialog(pt.mag - sigma)} y2={yToPixelDialog(pt.mag + sigma)} stroke={color} strokeWidth={1.5} style={{ opacity: 0.9, transition: 'opacity 200ms ease' }} />
+                                                    <line x1={px - capW} x2={px + capW} y1={yToPixelDialog(pt.mag - sigma)} y2={yToPixelDialog(pt.mag - sigma)} stroke={color} strokeWidth={1.5} style={{ opacity: 0.9, transition: 'opacity 200ms ease' }} />
+                                                    <line x1={px - capW} x2={px + capW} y1={yToPixelDialog(pt.mag + sigma)} y2={yToPixelDialog(pt.mag + sigma)} stroke={color} strokeWidth={1.5} style={{ opacity: 0.9, transition: 'opacity 200ms ease' }} />
                                                 </g>
                                             ) : null;
                                         })}
 
                                         {nondetectionsSeries.map((pt, i) => {
+                                            const { bandKey, isHidden, color } = getBandState(pt.band);
+                                            if (isHidden) return null;
                                             const px = xToPixelDialog(pt.t);
                                             const py = yToPixelDialog(pt.mag);
-                                            const bandKey = String(pt.band ?? 'default').toLowerCase();
-                                            const isActive = !hoveredBand || hoveredBand === bandKey;
                                             const isFromSurvey = pt.source === 'survey';
-                                            const size = isActive ? 6 : 5;
+                                            const size = 6;
                                             
                                             // Triangle for main, diamond for survey
                                             const path = isFromSurvey 
@@ -673,36 +692,35 @@ export default function Lightcurve({ data }: { data: LightcurveData }) {
                                                 : `${px - size},${py - 1} ${px + size},${py - 1} ${px},${py + size}`;
                                             
                                             return (
-                                                <polygon key={`nd-vis-${i}-${bandKey}`} points={path} fill={toColor(pt.band)} style={{ opacity: isActive ? 0.95 : 0.12, transition: 'opacity 200ms ease' }} />
+                                                <polygon key={`nd-vis-${i}-${bandKey}`} points={path} fill={color} style={{ opacity: 0.95, transition: 'opacity 200ms ease' }} />
                                             );
                                         })}
                                     </g>
 
                                     {/* detection points */}
                                     {detections.map((pt, i) => {
+                                        const { bandKey, isHidden, color } = getBandState(pt.band);
+                                        if (isHidden) return null;
                                         const px = xToPixelDialog(pt.t);
                                         const py = yToPixelDialog(pt.mag);
-                                        const bandKey = String(pt.band ?? 'default').toLowerCase();
-                                        const isActive = !hoveredBand || hoveredBand === bandKey;
-                                        const color = toColor(pt.band);
                                         const isFromSurvey = pt.source === 'survey';
-                                        const size = isActive ? 5 : 3;
+                                        const size = 5 ;
                                         
                                         return isFromSurvey ? (
-                                            <rect key={`d-${i}-${bandKey}`} x={px - size} y={py - size} width={size * 2} height={size * 2} fill={color} style={{ opacity: isActive ? 1 : 0.12, transition: 'opacity 200ms ease', pointerEvents: 'none' }} />
+                                            <rect key={`d-${i}-${bandKey}`} x={px - size} y={py - size} width={size * 2} height={size * 2} fill={color} style={{ opacity: 0.9, transition: 'opacity 200ms ease', pointerEvents: 'none' }} />
                                         ) : (
-                                            <circle key={`d-${i}-${bandKey}`} cx={px} cy={py} r={size} fill={color} style={{ opacity: isActive ? 1 : 0.12, transition: 'opacity 200ms ease, r 120ms ease' }} />
+                                            <circle key={`d-${i}-${bandKey}`} cx={px} cy={py} r={size} fill={color} style={{ opacity: 0.9, transition: 'opacity 200ms ease, r 120ms ease' }} />
                                         );
                                     })}
 
                                     {/* non-detection points */}
                                     {nondetectionsSeries.map((pt, i) => {
+                                        const { bandKey, isHidden, color } = getBandState(pt.band);
+                                        if (isHidden) return null;
                                         const px = xToPixelDialog(pt.t);
                                         const py = yToPixelDialog(pt.mag);
-                                        const bandKey = String(pt.band ?? 'default').toLowerCase();
-                                        const isActive = !hoveredBand || hoveredBand === bandKey;
                                         const isFromSurvey = pt.source === 'survey';
-                                        const size = isActive ? 6 : 5;
+                                        const size = 6;
                                         
                                         // Triangle for main, diamond for survey
                                         const path = isFromSurvey 
@@ -710,7 +728,7 @@ export default function Lightcurve({ data }: { data: LightcurveData }) {
                                             : `${px - size},${py - 1} ${px + size},${py - 1} ${px},${py + size}`;
                                         
                                         return (
-                                            <polygon key={`nd-${i}-${bandKey}`} points={path} fill={toColor(pt.band)} style={{ opacity: isActive ? 0.95 : 0.12, transition: 'opacity 200ms ease' }} />
+                                            <polygon key={`nd-${i}-${bandKey}`} points={path} fill={color} style={{ opacity: 0.95, transition: 'opacity 200ms ease' }} />
                                         );
                                     })}
                                 </>
@@ -720,6 +738,7 @@ export default function Lightcurve({ data }: { data: LightcurveData }) {
                 </div>
             </DialogContent>
         </Dialog>
-        </>
+            </CardContent>
+        </Card>
     );
 }

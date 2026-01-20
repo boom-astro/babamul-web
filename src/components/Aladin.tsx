@@ -115,7 +115,7 @@ export default function Aladin({
     return (
     //   <Card className="@container/card">
     // we want no padding at all in that card
-      <Card className="@container/card p-0 min-h-[100px]">
+      <Card className="@container/card p-0 min-h-[100px] col-span-1" style={{ minHeight: '40vh' }}>
         {/* then the card content also has no padding, but has rounded corners */}
         <CardContent className="p-0 flex flex-row gap-4 items-center w-full h-full rounded-lg" id="aladin-lite-container">
             <div id="aladin-lite-div" className="w-full h-full rounded-lg z-10"></div>

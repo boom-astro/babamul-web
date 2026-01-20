@@ -32,7 +32,7 @@ export default function CrossmatchCard() {
   if (!current) return null;
 
   return (
-    <Card className="@container/card col-span-2 row-span-2">
+    <Card className="@container/card col-span-1 @xl/main:col-span-2 @5xl/main:col-span-3">
       <CardContent>
         <div className="flex items-center justify-between">
             <CardTitle className="text-lg">Cross-matches</CardTitle>

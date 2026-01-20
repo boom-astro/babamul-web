@@ -61,6 +61,7 @@ type CandidateData = {
   cutout_difference?: Uint8Array | string | ArrayBuffer | undefined;
   prv_candidates?: Detection[];
   prv_nondetections?: Detection[];
+  survey_matches?: Record<string, { object_id?: string; distance_arcsec?: number }>;
 };
 
 function mjd_to_utc(mjd: number) {
@@ -190,8 +191,6 @@ export default function Header({
     const nb_detections = filteredCandidates.length;
     const nb_nondetections = filteredNonDetections.length;
 
-    // let first_det = filteredCandidates.length ? filteredCandidates.reduce((a: any, b: any) => a.jd < b.jd ? a : b) : null;
-    // let last_det = filteredCandidates.length ? filteredCandidates.reduce((a: any, b: any) => a.jd > b.jd ? a : b) : null;
     const first_det = useMemo(() => {
       if (filteredCandidates.length === 0) return null;
       return filteredCandidates.reduce((a: Detection, b: Detection) => ( (a.jd ?? Infinity) < (b.jd ?? Infinity) ? a : b));
@@ -217,7 +216,7 @@ export default function Header({
     }
 
     return (
-      <Card className="@container/card col-span-2 row-span-2 gap-3">
+      <Card className="@container/card col-span-1 @xl/main:col-span-2 gap-3 row-span-2">
         <CardHeader className="gap-0">
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">{objectId}</CardTitle>
           <CardDescription className="flex flex-col gap-1">
