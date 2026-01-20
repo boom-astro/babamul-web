@@ -2,7 +2,7 @@ import { useMemo, useState, useRef, useEffect } from 'react';
 import type React from 'react';
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Maximize2 } from 'lucide-react';
+import { Maximize2, Info } from 'lucide-react';
 import useAppStore from '@/lib/store';
 
 // band -> color map matching Lightcurve's palette
@@ -131,6 +131,7 @@ export default function CentroidPlot() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [tooltip, setTooltip] = useState<{ visible: boolean; x: number; y: number; point?: { x: number; y: number; band?: string; row?: Candidate } }>(() => ({ visible: false, x: 0, y: 0 }));
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [helpDialogOpen, setHelpDialogOpen] = useState(false);
 
   // Clear hoveredBand when opening the dialog to avoid focus-driven hover
   useEffect(() => {
@@ -158,7 +159,16 @@ export default function CentroidPlot() {
     <Card data-slot="card" className="col-span-1">
       <CardContent>
         <div className="pt-0 pb-1 flex items-center justify-between">
-          <CardTitle className="text-lg">Centroid Plot</CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle className="text-lg">Centroid Plot</CardTitle>
+            <button 
+              onClick={() => setHelpDialogOpen(true)} 
+              title="Plot information"
+              className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700"
+            >
+              <Info className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+            </button>
+          </div>
           <div>
             <button onClick={() => setDialogOpen(true)} title="Expand" className="p-1 rounded hover:bg-slate-100">
               <Maximize2 className="w-4 h-4 text-gray-600" />
@@ -697,6 +707,99 @@ export default function CentroidPlot() {
                 );
               })()
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Help Dialog */}
+      <Dialog open={helpDialogOpen} onOpenChange={setHelpDialogOpen}>
+        <DialogContent className="w-[min(1000px,95vw)] max-w-none sm:!max-w-none max-h-[90vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Understanding the Centroid Plot</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 text-sm">
+            <div>
+              <h3 className="font-semibold mb-2">What This Plot Shows</h3>
+              <p className="text-gray-600 dark:text-gray-300">
+                This plot displays the positional offsets of individual detections relative to the computed centroid of all detections. 
+                The centroid (marked with a crosshair at the center) represents the average position of the object across all observations.
+                Just like on the photometry plot, a toggle for "Other surveys" allows you to include or exclude data from additional surveys, if available.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold mb-2">Data Markers</h3>
+              <div className="space-y-2 text-gray-600 dark:text-gray-300">
+                <div className="flex items-start gap-2">
+                  <span className="font-medium">Circles:</span>
+                  <span>Individual detections from the main survey, colored by photometric filter band.</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="font-medium">Squares:</span>
+                  <span>Detections from other surveys (when "Other surveys" is enabled).</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="font-medium">Crosshair (center):</span>
+                  <span>The computed centroid position, representing the mean RA/Dec across all detections.</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="font-medium">Dashed circles:</span>
+                  <span>Reference circles showing distances from the centroid at 0.25", 0.5", 1", and larger intervals.</span>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="font-semibold mb-2">Coordinate System</h3>
+              <p className="text-gray-600 dark:text-gray-300">
+                The plot shows offsets in arcseconds. ΔRA (horizontal axis) and ΔDec (vertical axis) represent the difference 
+                between each detection's position and the centroid. The plot automatically scales to show all detections with appropriate padding.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold mb-2">Interactive Features</h3>
+              <div className="space-y-2 text-gray-600 dark:text-gray-300">
+                <div className="flex items-start gap-2">
+                  <span className="font-medium">Hover over points:</span>
+                  <span>View detailed information including RA/Dec offsets, separation from centroid, magnitude, and observation time (MJD).</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="font-medium">Hover over band legend:</span>
+                  <span>Highlights detections from that specific filter band and displays the band's individual centroid with a colored cross.</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="font-medium">Hover over center crosshair:</span>
+                  <span>Shows the precise RA and Dec coordinates of the overall centroid.</span>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="font-semibold mb-2">Expanded View</h3>
+              <p className="text-gray-600 dark:text-gray-300">
+                Click the expand icon to view time series plots showing how ΔRA, ΔDec, and separation from the centroid 
+                evolve over time (in MJD). This helps identify systematic position shifts or other temporal patterns.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold mb-2">What to Look For</h3>
+              <div className="space-y-2 text-gray-600 dark:text-gray-300">
+                <div className="flex items-start gap-2">
+                  <span className="font-medium">Tight cluster:</span>
+                  <span>Indicates consistent astrometric measurements with good precision.</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="font-medium">Scattered points:</span>
+                  <span>May indicate astrometric uncertainty, proper motion, or potential source confusion.</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="font-medium">Band-specific offsets:</span>
+                  <span>Different bands clustering in different areas may reveal chromatic effects or systematic biases.</span>
+                </div>
+              </div>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

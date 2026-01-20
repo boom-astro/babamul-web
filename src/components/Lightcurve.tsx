@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { Card, CardContent } from './ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Maximize2 } from 'lucide-react';
+import { Maximize2, Info } from 'lucide-react';
 
 // Band colors matching other plots
 const BAND_COLORS: Record<string, string> = {
@@ -139,6 +139,7 @@ export default function Lightcurve({ data }: { data: LightcurveData }) {
 
     const [hiddenBands, setHiddenBands] = useState<Set<string>>(new Set());
     const [dialogOpen, setDialogOpen] = useState(false);
+    const [helpDialogOpen, setHelpDialogOpen] = useState(false);
 
     const handleLegendClick = (band: string) => {
         setHiddenBands(prev => {
@@ -352,7 +353,16 @@ export default function Lightcurve({ data }: { data: LightcurveData }) {
             <CardContent>
                 <div ref={containerRef} style={{ width: '100%', height: '36vh', marginBottom: 20, position: 'relative'}}>
                     <div className="flex items-center justify-between">
-                        <div className="text-sm font-medium pb-2">Photometry</div>
+                        <div className="flex items-center gap-2">
+                            <div className="text-lg font-semibold pb-2">Photometry</div>
+                            <button 
+                                onClick={() => setHelpDialogOpen(true)} 
+                                title="Plot information"
+                                className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 mb-2"
+                            >
+                                <Info className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                            </button>
+                        </div>
                         <div className="flex items-center gap-3">
                             {bands.map(b =>
                                 <div
@@ -738,6 +748,90 @@ export default function Lightcurve({ data }: { data: LightcurveData }) {
                 </div>
             </DialogContent>
         </Dialog>
+
+                {/* Help Dialog */}
+                <Dialog open={helpDialogOpen} onOpenChange={setHelpDialogOpen}>
+                    <DialogContent className="w-[min(1000px,95vw)] max-w-none sm:!max-w-none max-h-[90vh] overflow-auto">
+                        <DialogHeader>
+                            <DialogTitle className="text-xl">Understanding the Photometry Plot</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4 text-sm">
+                            <div>
+                                <h3 className="font-semibold mb-2">What This Plot Shows</h3>
+                                <p className="text-gray-600 dark:text-gray-300">
+                                    This plot displays the brightness history of the astronomical object over time. The X-axis shows Modified Julian Date (MJD), 
+                                    and the Y-axis shows the AB magnitude (note: fainter objects have higher magnitude values, so the Y-axis is inverted).
+                                    It takes advantage of data from multiple surveys to provide a comprehensive view of the object's photometric behavior,
+                                    if available. We will refer to the survey from which the object originates as the "primary" survey, and any additional data from other surveys as "other surveys".
+                                </p>
+                            </div>
+
+                            <div>
+                                <h3 className="font-semibold mb-2">Data Markers</h3>
+                                <div className="space-y-2 text-gray-600 dark:text-gray-300">
+                                    <div className="flex items-start gap-2">
+                                        <span className="font-medium">Circles:</span>
+                                        <span>Detections from the "primary" survey. Error bars show the measurement uncertainty (±σ).</span>
+                                    </div>
+                                    <div className="flex items-start gap-2">
+                                        <span className="font-medium">Squares:</span>
+                                        <span>Detections from other surveys (when "Other surveys" is enabled).</span>
+                                    </div>
+                                    <div className="flex items-start gap-2">
+                                        <span className="font-medium">Triangles:</span>
+                                        <span>Non-detections from the "primary" survey, showing limiting magnitude (the object was fainter than this value).</span>
+                                    </div>
+                                    <div className="flex items-start gap-2">
+                                        <span className="font-medium">Diamonds:</span>
+                                        <span>Non-detections from other surveys.</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h3 className="font-semibold mb-2">Filter Bands</h3>
+                                <p className="text-gray-600 dark:text-gray-300">
+                                    Different colored markers represent different photometric filters (bands), such as <span className="font-mono">g</span>, <span className="font-mono">r</span>, <span className="font-mono">i</span>, etc. 
+                                    Each filter captures light in a specific wavelength range.
+                                </p>
+                            </div>
+
+                            <div>
+                                <h3 className="font-semibold mb-2">Interactive Features</h3>
+                                <div className="space-y-2 text-gray-600 dark:text-gray-300">
+                                    <div className="flex items-start gap-2">
+                                        <span className="font-medium">Hover:</span>
+                                        <span>Move your cursor over any point to see detailed information.</span>
+                                    </div>
+                                    <div className="flex items-start gap-2">
+                                        <span className="font-medium">Drag to zoom:</span>
+                                        <span>Click and drag to select a region and zoom in on that area.</span>
+                                    </div>
+                                    <div className="flex items-start gap-2">
+                                        <span className="font-medium">Double-click:</span>
+                                        <span>Reset the zoom to show all data.</span>
+                                    </div>
+                                    <div className="flex items-start gap-2">
+                                        <span className="font-medium">Click band legend:</span>
+                                        <span>Toggle visibility of individual filter bands.</span>
+                                    </div>
+                                    <div className="flex items-start gap-2">
+                                        <span className="font-medium">Double-click band:</span>
+                                        <span>Show only that band (isolate it). Double-click again to show all bands.</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h3 className="font-semibold mb-2">Data Sources</h3>
+                                <p className="text-gray-600 dark:text-gray-300">
+                                    The plot combines data from the "primary" survey with data from other surveys' nearest objects, if any. 
+                                    Use the "Other surveys" checkbox to include or exclude cross-matched data from additional sources.
+                                </p>
+                            </div>
+                        </div>
+                    </DialogContent>
+                </Dialog>
             </CardContent>
         </Card>
     );
