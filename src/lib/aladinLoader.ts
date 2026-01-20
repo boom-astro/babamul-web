@@ -19,18 +19,15 @@ export function loadAladinScript(): Promise<void> {
     const script = document.createElement('script');
     script.type = 'text/javascript';
     script.src = 'https://aladin.cds.unistra.fr/AladinLite/api/v3/latest/aladin.js';
-    script.charset = 'utf-8';
     script.async = true; // Load asynchronously
-    
     script.onload = () => {
       resolve();
     };
-    
     script.onerror = () => {
       aladinLoadPromise = null; // Reset so it can be retried
       reject(new Error('Failed to load Aladin Lite library'));
     };
-    
+
     document.head.appendChild(script);
   });
 
