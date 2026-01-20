@@ -34,10 +34,13 @@ import {
   DialogContent,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
 
 
 dayjs.extend(utc);
 dayjs.extend(relativeTime);
+
+const colorMap = "bone";
 
 
 type Detection = {
@@ -110,6 +113,47 @@ export function ClassificationBadges({
   )
 }
 
+export function SurveyMatchesBadges({
+  survey_matches,
+}: {
+  survey_matches: Record<string, { object_id?: string, distance_arcsec?: number }> | null | undefined;
+}) {
+  if (!survey_matches || Object.keys(survey_matches).length === 0) {
+    return null;
+  }
+  return (
+    <div className="flex flex-row flex-wrap gap-2">
+      {Object.entries(survey_matches).map(([survey, match]) => {
+        // if match is null or object_id is missing, skip
+        if (!match || !match.object_id) {
+          return null;
+        }
+        const objectId = match.object_id ?? "unknown";
+        const distance = match.distance_arcsec != null ? `${match.distance_arcsec.toFixed(2)}"` : "unknown";
+        const url = `/objects/${survey}/${objectId}`;
+        return (
+          <Tooltip key={survey}>
+            <TooltipTrigger asChild>
+              <Badge
+                variant="secondary"
+                className="text-sm font-semibold cursor-pointer hover:underline"
+                onClick={() => window.open(url, "_blank")}
+              >
+                {/* {survey.toUpperCase()}: {objectId} */}
+                {/* only show the survey name in front, if the objectId doesn't start with the survey name */}
+                {objectId.toLowerCase().startsWith(survey.toLowerCase()) ? objectId : `${survey.toUpperCase()} ${objectId}`}
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent>
+              <span>Separation: {distance}</span>
+            </TooltipContent>
+          </Tooltip>
+        );
+      })}
+    </div>
+  );
+}
+
 function formatDetection(det: Detection | null): string {
   if (!det) return "-";
   const mag = det.magpsf;
@@ -162,24 +206,30 @@ export default function Header({
     }, [filteredCandidates]);
     const age = (first_det && last_det && first_det.jd != null && last_det.jd != null) ? Math.round((last_det.jd - first_det.jd) * 100) / 100 : "-";
 
-    const scienceImage = bytes2image(data.cutout_science, "science");
-    const templateImage = bytes2image(data.cutout_template, "template");
-    const differenceImage = bytes2image(data.cutout_difference, "difference");
+    const survey = objectId.startsWith("ZTF") ? "ztf" : "lsst";
+
+    const scienceImage = bytes2image(data.cutout_science, survey, "science", colorMap);
+    const templateImage = bytes2image(data.cutout_template, survey, "template", colorMap);
+    const differenceImage = bytes2image(data.cutout_difference, survey, "difference", colorMap);
 
     function openLightbox() {
       setLightboxOpen(true);
     }
 
     return (
-      <Card className="@container/card col-span-2 row-span-2">
-        <CardHeader>
+      <Card className="@container/card col-span-2 row-span-2 gap-3">
+        <CardHeader className="gap-0">
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">{objectId}</CardTitle>
-          <CardDescription>
-            <ClassificationBadges data={data} />
+          <CardDescription className="flex flex-col gap-1">
+            <div className='text-md'>RA: {ra}° | Dec: {dec}° &nbsp;</div>
+            <div className="flex flex-row gap-2">
+              <SurveyMatchesBadges survey_matches={data.survey_matches} />
+              <ClassificationBadges data={data} />
+            </div>
           </CardDescription>
         </CardHeader>
-        <CardContent className="pb-0 flex flex-col gap-4">
-            <div className="grid grid-cols-3 gap-4">
+        <CardContent className="pb-0 flex flex-col gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <div key="science" className="w-full relative group">
                 <button onClick={openLightbox} className="w-full h-full text-left">
                   <img src={scienceImage ?? undefined} alt="Science" className="w-full h-auto object-cover rounded" style={{ imageRendering: 'pixelated' }}/>
