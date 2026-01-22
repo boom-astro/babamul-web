@@ -26,7 +26,7 @@ A React + TypeScript + Vite front end for the BOOM application.
    (https://github.com/boom-astro/boom)
    and spin them up for local development:
    ```bash
-   make api-dev
+   make dev
    ```
 
 1. Build and start the front end development container:
