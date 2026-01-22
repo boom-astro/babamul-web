@@ -274,11 +274,11 @@ export type SearchObjectsResponse = {
 
 export async function searchObjects(value: string, limit: number = 10): Promise<SearchObjectsResponse> {
   const searchParams = new URLSearchParams({
-    value,
+    object_id: value,
     limit: String(limit),
   });
   
-  const url = `${API_BASE}/surveys/objects/search/${searchParams.toString()}`;
+  const url = `${API_BASE}/objects?${searchParams.toString()}`;
   const res = await fetchWithAuth(url);
   if (!res.ok) {
     // Gracefully handle 400 with message, error if there is no message
