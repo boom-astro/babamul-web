@@ -10,10 +10,10 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        BOOM_API__DOMAIN: api.${DOMAIN?Variable not set}
+        BOOM_API__DOMAIN: ${BOOM_API__DOMAIN?Variable not set}
         PRERELEASE_MODE: ${PRERELEASE_MODE:-false}
     environment:
-      BOOM_API__DOMAIN: api.${DOMAIN?Variable not set}
+      BOOM_API__DOMAIN: ${BOOM_API__DOMAIN?Variable not set}
       PRERELEASE_MODE: ${PRERELEASE_MODE:-false}
     networks:
       - traefik-public
