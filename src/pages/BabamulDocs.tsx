@@ -1,7 +1,9 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
+import mermaid from "mermaid";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ChevronDown, ChevronRight, Copy } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -17,6 +19,40 @@ type TopicNode = {
   desc?: string;
   children?: TopicNode[];
 };
+
+const MULTI_SURVEY_MERMAID = `sequenceDiagram
+    participant LSST as LSST
+    participant ZTF as ZTF
+    participant Stream as Babamul topics
+
+    Note over LSST,Stream: Day 1: First observation by LSST
+    LSST->>Stream: Object discovered (stellar)
+    rect rgb(95, 63, 45)
+    Note over Stream: Topic: babamul.lsst.no-ztf-match.stellar<br/><br/>Survey matches: none
+    end
+
+    Note over ZTF,Stream: Day 3: ZTF observes same object
+    ZTF->>Stream: Object observed (stellar)
+    rect rgb(45, 63, 95)
+    Note over Stream: Topic: babamul.ztf.lsst-match.stellar<br/><br/>Survey matches: lsst
+    end
+
+    Note over LSST,Stream: Day 5: LSST observes again
+    LSST->>Stream: Object re-observed (stellar)
+    rect rgb(45, 95, 63)
+    Note over Stream: Topic: babamul.lsst.ztf-match.stellar<br/><br/>Survey matches: ztf
+    end
+
+    Note over ZTF,Stream: Day 7+: LSST and ZTF continue observing
+    ZTF->>Stream: Subsequent observations
+    rect rgb(45, 63, 95)
+    Note over Stream: Topic: babamul.ztf.lsst-match.stellar<br/><br/>Survey matches: lsst
+    end
+    LSST->>Stream: Subsequent observations
+    rect rgb(45, 95, 63)
+    Note over Stream: Topic: babamul.lsst.ztf-match.stellar<br/><br/>Survey matches: ztf
+    end
+`;
 
 const TOPIC_TREE: TopicNode[] = [
   {
@@ -143,10 +179,38 @@ fn main() {
 `;
 }
 
+function MermaidDiagram({ chart }: { chart: string }) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const renderId = useMemo(() => `mermaid-${Math.random().toString(36).slice(2, 8)}`, []);
+
+  useEffect(() => {
+    mermaid.initialize({ startOnLoad: false, securityLevel: 'loose' });
+  }, []);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    let canceled = false;
+    mermaid
+      .render(renderId, chart)
+      .then(({ svg }) => {
+        if (canceled || !containerRef.current) return;
+        containerRef.current.innerHTML = svg;
+      })
+      .catch((err) => {
+        console.error('Failed to render mermaid diagram', err);
+      });
+    return () => {
+      canceled = true;
+    };
+  }, [chart, renderId]);
+
+  return <div ref={containerRef} className="overflow-x-auto bg-black p-4 rounded-lg" aria-label="Mermaid diagram" />;
+}
+
 export default function BabamulDocs() {
   const [step, setStep] = useState<number>(0);
   const [selected, setSelected] = useState<string[]>([]);
-  
+
   // compute default collapsed nodes: groups whose immediate children are leaves
   function findLeafGroupKeys(nodes: TopicNode[]): string[] {
     const out: string[] = [];
@@ -173,6 +237,7 @@ export default function BabamulDocs() {
   const [offset, setOffset] = useState<string>("earliest");
   const [autoCommit, setAutoCommit] = useState<boolean>(true);
   const [lang, setLang] = useState<'python'|'rust'>('python');
+  const [showObjectAppearanceModal, setShowObjectAppearanceModal] = useState<boolean>(false);
 
   // Load kafka credentials on mount
   useEffect(() => {
@@ -240,8 +305,6 @@ export default function BabamulDocs() {
       ? generatePython(effectiveSelected, groupId, offset, autoCommit, clientIdForGeneration, clientSecretForGeneration)
       : generateRust(effectiveSelected, groupId, offset, autoCommit, clientIdForGeneration, clientSecretForGeneration);
   }, [effectiveSelected, groupId, offset, autoCommit, lang, clientIdForGeneration, clientSecretForGeneration]);
-
-  // topic toggling handled inline via Checkbox `onCheckedChange`
 
   function collectDescendantKeys(node: TopicNode): string[] {
     if (!node.children || node.children.length === 0) return [node.key];
@@ -329,6 +392,37 @@ export default function BabamulDocs() {
   return (
     <div className="px-4 lg:px-6">
       <div className="max-w-4xl mx-auto">
+        {/* Modal for object appearance documentation */}
+        <Dialog open={showObjectAppearanceModal} onOpenChange={setShowObjectAppearanceModal}>
+          <DialogContent className="!max-w-6xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Object appearance in output topics</DialogTitle>
+            </DialogHeader>
+            <div className="prose prose-sm dark:prose-invert max-w-none [&>p]:mb-4">
+              <p>
+                When an object is observed by multiple surveys,
+                alerts include survey match data in the
+                <code>survey_matches</code> field.
+                Topics follow the pattern: <code>babamul.{"{source_survey}"}.{"{other_survey}"}-match.*</code>.
+              </p>
+              <p>
+                On the first observation of a given object,
+                the alert has empty <code>survey_matches</code>.
+                When the object
+                is subsequently observed by another survey,
+                that alert includes information from
+                the other survey in its <code>survey_matches</code> field.
+                From that point forward, alerts on both streams include
+                <code>survey_matches</code> in their alerts.
+              </p>
+              <h3 className="mt-4 font-semibold">Multi-survey object appearance flow</h3>
+              <div className="mt-4">
+                <MermaidDiagram chart={MULTI_SURVEY_MERMAID} />
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-lg font-medium">Babamul — Kafka access guide</h2>
@@ -348,7 +442,7 @@ export default function BabamulDocs() {
           <Card className="min-h-[50vh]">
             <CardHeader>
               <CardTitle>1 — Pick topics</CardTitle>
-              <CardDescription>Choose one or more Babamul topics to read from.</CardDescription>
+              <CardDescription>Choose one or more Babamul topics to read from. <button onClick={() => setShowObjectAppearanceModal(true)} className="text-primary hover:underline cursor-pointer">Learn more about how objects will appear in topics</button>.</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid gap-3">
