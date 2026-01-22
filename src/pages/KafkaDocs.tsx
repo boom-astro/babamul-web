@@ -24,23 +24,23 @@ const TOPIC_TREE: TopicNode[] = [
     label: "LSST",
     children: [
       {
-        key: "babamul.lsst.only",
+        key: "babamul.lsst.no-ztf-match",
         label: "LSST — LSST-only",
         children: [
-          { key: "babamul.lsst.only.stellar", desc: "Alerts classified as stellar" },
-          { key: "babamul.lsst.only.hosted", desc: "Alerts with a host galaxy" },
-          { key: "babamul.lsst.only.hostless", desc: "Alerts without a host galaxy" },
-          { key: "babamul.lsst.only.unknown", desc: "Unclassified alerts" },
+          { key: "babamul.lsst.no-ztf-match.stellar", desc: "Alerts classified as stellar" },
+          { key: "babamul.lsst.no-ztf-match.hosted", desc: "Alerts with a host galaxy" },
+          { key: "babamul.lsst.no-ztf-match.hostless", desc: "Alerts without a host galaxy" },
+          { key: "babamul.lsst.no-ztf-match.unknown", desc: "Unclassified alerts" },
         ],
       },
       {
-        key: "babamul.lsst.ztfmatch",
+        key: "babamul.lsst.ztf-match",
         label: "LSST — with ZTF match",
         children: [
-          { key: "babamul.lsst.ztfmatch.stellar", desc: "Alerts classified as stellar" },
-          { key: "babamul.lsst.ztfmatch.hosted", desc: "Alerts with a host galaxy" },
-          { key: "babamul.lsst.ztfmatch.hostless", desc: "Alerts without a host galaxy" },
-          { key: "babamul.lsst.ztfmatch.unknown", desc: "Unclassified alerts" },
+          { key: "babamul.lsst.ztf-match.stellar", desc: "Alerts classified as stellar" },
+          { key: "babamul.lsst.ztf-match.hosted", desc: "Alerts with a host galaxy" },
+          { key: "babamul.lsst.ztf-match.hostless", desc: "Alerts without a host galaxy" },
+          { key: "babamul.lsst.ztf-match.unknown", desc: "Unclassified alerts" },
         ],
       },
     ],
@@ -50,23 +50,21 @@ const TOPIC_TREE: TopicNode[] = [
     label: "ZTF",
     children: [
       {
-        key: "babamul.ztf.only",
+        key: "babamul.ztf.no-lsst-match",
         label: "ZTF — ZTF-only",
         children: [
-          { key: "babamul.ztf.only.stellar", desc: "Alerts classified as stellar" },
-          { key: "babamul.ztf.only.hosted", desc: "Alerts with a host galaxy" },
-          { key: "babamul.ztf.only.hostless", desc: "Alerts without a host galaxy" },
-          { key: "babamul.ztf.only.unknown", desc: "Unclassified alerts" },
+          { key: "babamul.ztf.no-lsst-match.stellar", desc: "Alerts classified as stellar" },
+          { key: "babamul.ztf.no-lsst-match.hosted", desc: "Alerts with a host galaxy" },
+          { key: "babamul.ztf.no-lsst-match.hostless", desc: "Alerts without a host galaxy" },
         ],
       },
       {
-        key: "babamul.ztf.ztfmatch",
+        key: "babamul.ztf.lsst-match",
         label: "ZTF — with LSST match",
         children: [
-          { key: "babamul.ztf.lsstmatch.stellar", desc: "Alerts classified as stellar" },
-          { key: "babamul.ztf.lsstmatch.hosted", desc: "Alerts with a host galaxy" },
-          { key: "babamul.ztf.lsstmatch.hostless", desc: "Alerts without a host galaxy" },
-          { key: "babamul.ztf.lsstmatch.unknown", desc: "Unclassified alerts" },
+          { key: "babamul.ztf.lsst-match.stellar", desc: "Alerts classified as stellar" },
+          { key: "babamul.ztf.lsst-match.hosted", desc: "Alerts with a host galaxy" },
+          { key: "babamul.ztf.lsst-match.hostless", desc: "Alerts without a host galaxy" },
         ],
       },
     ],
@@ -143,7 +141,7 @@ fn main() {
 `;
 }
 
-export default function BabamulDocs() {
+export default function KafkaDocs() {
   const [step, setStep] = useState<number>(0);
   const [selected, setSelected] = useState<string[]>([]);
   
