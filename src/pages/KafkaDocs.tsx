@@ -20,51 +20,69 @@ type TopicNode = {
 
 const TOPIC_TREE: TopicNode[] = [
   {
-    key: "babamul.lsst",
-    label: "LSST",
+    key: "babamul.ztf",
+    label: "ZTF",
     children: [
       {
-        key: "babamul.lsst.no-ztf-match",
-        label: "LSST — LSST-only",
+        key: "babamul.ztf.stellar",
+        label: "Stellar",
         children: [
-          { key: "babamul.lsst.no-ztf-match.stellar", desc: "Alerts classified as stellar" },
-          { key: "babamul.lsst.no-ztf-match.hosted", desc: "Alerts with a host galaxy" },
-          { key: "babamul.lsst.no-ztf-match.hostless", desc: "Alerts without a host galaxy" },
-          { key: "babamul.lsst.no-ztf-match.unknown", desc: "Unclassified alerts" },
+          { key: "babamul.ztf.no-lsst-match.stellar", desc: "ZTF-only, classified as stellar" },
+          { key: "babamul.ztf.lsst-match.stellar", desc: "With LSST match, classified as stellar" },
         ],
       },
       {
-        key: "babamul.lsst.ztf-match",
-        label: "LSST — with ZTF match",
+        key: "babamul.ztf.hosted",
+        label: "Hosted",
         children: [
-          { key: "babamul.lsst.ztf-match.stellar", desc: "Alerts classified as stellar" },
-          { key: "babamul.lsst.ztf-match.hosted", desc: "Alerts with a host galaxy" },
-          { key: "babamul.lsst.ztf-match.hostless", desc: "Alerts without a host galaxy" },
-          { key: "babamul.lsst.ztf-match.unknown", desc: "Unclassified alerts" },
+          { key: "babamul.ztf.no-lsst-match.hosted", desc: "ZTF-only, with a host galaxy" },
+          { key: "babamul.ztf.lsst-match.hosted", desc: "With LSST match, with a host galaxy" },
+        ],
+      },
+      {
+        key: "babamul.ztf.hostless",
+        label: "Hostless",
+        children: [
+          { key: "babamul.ztf.no-lsst-match.hostless", desc: "ZTF-only, without a host galaxy" },
+          { key: "babamul.ztf.lsst-match.hostless", desc: "With LSST match, without a host galaxy" },
         ],
       },
     ],
   },
   {
-    key: "babamul.ztf",
-    label: "ZTF",
+    key: "babamul.lsst",
+    label: "LSST",
     children: [
       {
-        key: "babamul.ztf.no-lsst-match",
-        label: "ZTF — ZTF-only",
+        key: "babamul.lsst.stellar",
+        label: "Stellar",
         children: [
-          { key: "babamul.ztf.no-lsst-match.stellar", desc: "Alerts classified as stellar" },
-          { key: "babamul.ztf.no-lsst-match.hosted", desc: "Alerts with a host galaxy" },
-          { key: "babamul.ztf.no-lsst-match.hostless", desc: "Alerts without a host galaxy" },
+          { key: "babamul.lsst.no-ztf-match.stellar", desc: "LSST-only, classified as stellar" },
+          { key: "babamul.lsst.ztf-match.stellar", desc: "With ZTF match, classified as stellar" },
         ],
       },
       {
-        key: "babamul.ztf.lsst-match",
-        label: "ZTF — with LSST match",
+        key: "babamul.lsst.hosted",
+        label: "Hosted",
         children: [
-          { key: "babamul.ztf.lsst-match.stellar", desc: "Alerts classified as stellar" },
-          { key: "babamul.ztf.lsst-match.hosted", desc: "Alerts with a host galaxy" },
-          { key: "babamul.ztf.lsst-match.hostless", desc: "Alerts without a host galaxy" },
+          { key: "babamul.lsst.no-ztf-match.hosted", desc: "LSST-only, with a host galaxy" },
+          { key: "babamul.lsst.ztf-match.hosted", desc: "With ZTF match, with a host galaxy" },
+        ],
+      },
+      {
+        key: "babamul.lsst.hostless",
+        label: "Hostless",
+        children: [
+          { key: "babamul.lsst.no-ztf-match.hostless", desc: "LSST-only, without a host galaxy" },
+          { key: "babamul.lsst.ztf-match.hostless", desc: "With ZTF match, without a host galaxy" },
+        ],
+      },
+      {
+        key: "babamul.lsst.unknown",
+        label: "Unknown",
+        children: [
+          { key: "babamul.lsst.no-ztf-match.unknown", desc: "LSST-only, unclassified alerts" },
+          { key: "babamul.lsst.ztf-match.unknown", desc: "With ZTF match, unclassified alerts" },
         ],
       },
     ],
