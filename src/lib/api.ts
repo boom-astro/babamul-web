@@ -18,7 +18,7 @@ export type ApiObject = Record<string, unknown>;
 export type Profile = { username?: string; name?: string; email?: string; avatar?: string } | null;
 
 // Kafka credential returned by `/babamul/kafka-credentials`
-export type KafkaCredential = { name: string; client_id: string; client_secret: string };
+export type KafkaCredential = { name: string; kafka_username: string; kafka_password: string };
 
 const TOKEN_KEY = "api_token";
 const USERNAME_KEY = "api_user";
@@ -278,7 +278,7 @@ export async function searchObjects(value: string, limit: number = 10): Promise<
     limit: String(limit),
   });
   
-  const url = `${API_BASE}/surveys/objects/search?${searchParams.toString()}`;
+  const url = `${API_BASE}/surveys/objects/search/${searchParams.toString()}`;
   const res = await fetchWithAuth(url);
   if (!res.ok) {
     // Gracefully handle 400 with message, error if there is no message

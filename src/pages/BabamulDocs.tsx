@@ -73,7 +73,7 @@ const TOPIC_TREE: TopicNode[] = [
   },
 ];
 
-function generatePython(topics: string[], groupId: string, offset: string, autoCommit: boolean, usernameVar = "<CLIENT_ID>", passwordVar = "<CLIENT_SECRET>") {
+function generatePython(topics: string[], groupId: string, offset: string, autoCommit: boolean, usernameVar = "<KAFKA_USERNAME>", passwordVar = "<KAFKA_PASSWORD>") {
   const topicsList = topics.map(t => `"${t}"`).join(', ');
   return `from confluent_kafka import Consumer
 
@@ -106,7 +106,7 @@ finally:
 `;
 }
 
-function generateRust(topics: string[], groupId: string, offset: string, autoCommit: boolean, usernameVar = "<CLIENT_ID>", passwordVar = "<CLIENT_SECRET>") {
+function generateRust(topics: string[], groupId: string, offset: string, autoCommit: boolean, usernameVar = "<KAFKA_USERNAME>", passwordVar = "<KAFKA_PASSWORD>") {
   const topicsList = topics.map(t => `"${t}"`).join(', ');
   const autoCommitCfg = autoCommit ? 'true' : 'false';
   return `use rdkafka::config::ClientConfig;
@@ -182,7 +182,7 @@ export default function BabamulDocs() {
         const creds = await fetchKafkaCredentials();
         setKafkaCredentials(creds);
         if (creds.length > 0) {
-          setSelectedCredentialId(creds[0].client_id);
+          setSelectedCredentialId(creds[0].kafka_username);
         }
       } catch (err) {
         console.error('Failed to load kafka credentials:', err);
@@ -194,9 +194,9 @@ export default function BabamulDocs() {
   }, []);
 
   // Get selected credential details for code generation
-  const selectedCredential = kafkaCredentials.find(c => c.client_id === selectedCredentialId);
-  const clientIdForGeneration = selectedCredential?.client_id || "<CLIENT_ID>";
-  const clientSecretForGeneration = selectedCredential?.client_secret || "<CLIENT_SECRET>";
+  const selectedCredential = kafkaCredentials.find(c => c.kafka_username === selectedCredentialId);
+  const clientIdForGeneration = selectedCredential?.kafka_username || "<KAFKA_USERNAME>";
+  const clientSecretForGeneration = selectedCredential?.kafka_password || "<KAFKA_PASSWORD>";
 
   function toggleCollapsed(key: string) {
     setCollapsed(prev => {
@@ -390,7 +390,7 @@ export default function BabamulDocs() {
                         </SelectTrigger>
                         <SelectContent>
                           {kafkaCredentials.map(cred => (
-                            <SelectItem key={cred.client_id} value={cred.client_id}>
+                            <SelectItem key={cred.kafka_username} value={cred.kafka_username}>
                               {cred.name}
                             </SelectItem>
                           ))}

@@ -26,7 +26,6 @@ export default function ObjectPage() {
       setError(null);
       try {
         const obj = await api.fetchObject(survey as string, objectId as string);
-        console.log("Fetched object data:", obj);
         if (!mounted) return;
 
         // Format cross_matches: compute separation from source and strip coordinates

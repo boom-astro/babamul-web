@@ -118,6 +118,9 @@ export default function Query() {
                 maxResults={20}
                 showFooter={false}
               />
+              <div className="text-sm text-muted-foreground mt-2 w-full text-end">
+                Showing up to 10 results.
+              </div>
             </TabsContent>
 
             <TabsContent value="alerts">
