@@ -68,11 +68,6 @@ function LayoutRoutes() {
   const path = location.pathname || '/';
   const isLanding = path === '/' || path === '/landing';
 
-  // In release mode, only allow landing page
-  if (PRERELEASE_MODE && !['/', '/landing'].includes(path)) {
-    return <Navigate to="/" replace />;
-  }
-
   return (
     <>
       {!isLanding && <AppSidebar variant="inset" />}
@@ -86,14 +81,13 @@ function LayoutRoutes() {
                 <Routes>
                   <Route path="/" element={<Landing />} />
                   <Route path="/landing" element={<Landing />} />
-                  {!PRERELEASE_MODE && <Route path="/login" element={<LoginPageWrapper />} />}
+                  <Route path="/login" element={<LoginPageWrapper />} />
                   {!PRERELEASE_MODE && <Route path="/signup" element={<SignupPage />} />}
-                  {!PRERELEASE_MODE && <Route path="/query" element={<ProtectedRoute><Query /></ProtectedRoute>} />}
-                  {!PRERELEASE_MODE && <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />}
-                  {!PRERELEASE_MODE && <Route path="/docs/kafka" element={<ProtectedRoute><BabamulDocs /></ProtectedRoute>} />}
-                  {!PRERELEASE_MODE && <Route path="/docs/api" element={<ApiDocs />} />}
-                  {!PRERELEASE_MODE && <Route path="/objects/:survey/:objectId" element={<ProtectedRoute><ObjectPage /></ProtectedRoute>} />}
-                  {PRERELEASE_MODE && <Route path="*" element={<Navigate to="/" replace />} />}
+                  <Route path="/query" element={<ProtectedRoute><Query /></ProtectedRoute>} />
+                  <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                  <Route path="/docs/kafka" element={<ProtectedRoute><BabamulDocs /></ProtectedRoute>} />
+                  <Route path="/docs/api" element={<ApiDocs />} />
+                  <Route path="/objects/:survey/:objectId" element={<ProtectedRoute><ObjectPage /></ProtectedRoute>} />
                 </Routes>
               </Suspense>
             </div>
