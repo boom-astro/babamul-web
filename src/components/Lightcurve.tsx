@@ -19,7 +19,7 @@ function toColor(band?: string) {
     return BAND_COLORS[k] ?? BAND_COLORS.default;
 }
 
-type Detection = { jd?: number; magpsf?: number; sigmapsf?: number; diffmaglim?: number; band?: string; source?: 'candidate' | 'fphist' | 'survey' | 'main' };
+type Detection = { jd?: number; magpsf?: number | undefined; sigmapsf?: number | undefined; diffmaglim?: number; band?: string; source?: 'candidate' | 'fphist' | 'survey' | 'main', snr?: number | undefined };
 
 type LightcurveData = {
     prv_candidates?: Detection[];
@@ -38,23 +38,69 @@ export default function Lightcurve({ data }: { data: LightcurveData }) {
     const nondets: Detection[] = data?.prv_nondetections ?? [];
     const survey_matches = data?.survey_matches;
     const [includeSurveyMatches, setIncludeSurveyMatches] = useState(true);
+    const [includeForcedPhot, setIncludeForcedPhot] = useState(true);
 
-    // extract survey match detections
+    const nondetsFromFpHists = useMemo(() => {
+        if (!includeForcedPhot) return [];
+        return fpHists.filter(d => d.diffmaglim !== undefined && d.magpsf === undefined);
+    }, [fpHists, includeForcedPhot]);
+
+    // extract survey match detections (candidates only)
     const surveyMatchDetections = useMemo(() => {
         if (!survey_matches || !includeSurveyMatches) return [];
         const result: Detection[] = [];
         for (const [_survey, data] of Object.entries(survey_matches)) {
-            console.log('Processing survey match data:', data);
             if (data?.prv_candidates) {
                 result.push(...(Array.isArray(data.prv_candidates) ? data.prv_candidates : []));
-            }
-            if (data?.fp_hists) {
-                result.push(...(Array.isArray(data.fp_hists) ? data.fp_hists : []));
             }
         }
         return result;
     }, [survey_matches, includeSurveyMatches]);
-    console.log('Survey match detections:', surveyMatchDetections);
+
+    const surveyMatchNondetections = useMemo(() => {
+        if (!survey_matches || !includeSurveyMatches) return [];
+        const result: Detection[] = [];
+        for (const [_survey, data] of Object.entries(survey_matches)) {
+            if (data?.prv_nondetections) {
+                result.push(...(Array.isArray(data.prv_nondetections) ? data.prv_nondetections : []));
+            }
+        }
+        return result;
+    }, [survey_matches, includeSurveyMatches]);
+
+    // extract survey match forced photometry
+    // fp hists contains both detections and non-detections, so we need to split them
+    const surveyMatchFpHists = useMemo(() => {
+        if (!survey_matches || !includeSurveyMatches || !includeForcedPhot) return [];
+        const result: Detection[] = [];
+        for (const [_survey, data] of Object.entries(survey_matches)) {
+            if (data?.fp_hists) {
+                const arr = Array.isArray(data.fp_hists) ? data.fp_hists : [];
+                for (const d of arr) {
+                    if (d.magpsf !== undefined) {
+                        result.push(d);
+                    }
+                }
+            }
+        }
+        return result;
+    }, [survey_matches, includeSurveyMatches, includeForcedPhot]);
+
+    const surveyMatchNondetectionsFromFpHists = useMemo(() => {
+        if (!survey_matches || !includeSurveyMatches) return [];
+        const result: Detection[] = [];
+        for (const [_survey, data] of Object.entries(survey_matches)) {
+            if (data?.fp_hists) {
+                const arr = Array.isArray(data.fp_hists) ? data.fp_hists : [];
+                for (const d of arr) {
+                    if (d.diffmaglim !== undefined && d.magpsf === undefined) {
+                        result.push(d);
+                    }
+                }
+            }
+        }
+        return result;
+    }, [survey_matches, includeSurveyMatches]);
 
     // merge detections and non-detections into series grouped by band
     const detections = useMemo(() => {
@@ -63,40 +109,38 @@ export default function Lightcurve({ data }: { data: LightcurveData }) {
             ...d,
             source: 'candidate' as const,
         }));
-        let fphists_arr = fpHists.map(d => ({
+        let fphists_arr = (includeForcedPhot ? fpHists : []).map(d => ({
             ...d,
             source: 'fphist' as const,
         }));
-        let survey_arr = surveyMatchDetections.map(d => ({
+        let survey_candidates_arr = surveyMatchDetections.map(d => ({
             ...d,
             source: 'survey' as const,
         }));
-        arr = [...candidates_arr, ...fphists_arr, ...survey_arr] as Detection[];
+        let survey_fphists_arr = surveyMatchFpHists.map(d => ({
+            ...d,
+            source: 'survey' as const,
+        }));
+        arr = [...candidates_arr, ...fphists_arr, ...survey_candidates_arr, ...survey_fphists_arr] as Detection[];
         return arr
             .map(d => ({
                 t: d.jd !== undefined ? jd2mjd(Number(d.jd)) : NaN,
                 mag: d.magpsf !== undefined ? Number(d.magpsf) : NaN,
                 band: d.band ?? 'unknown',
                 sigma: d.sigmapsf !== undefined ? Number(d.sigmapsf) : NaN,
+                snr: d.snr !== undefined ? Number(d.snr) : NaN,
                 source: d.source,
             }))
             .filter(d => Number.isFinite(d.t) && Number.isFinite(d.mag));
-    }, [candidates, fpHists, surveyMatchDetections]);
+    }, [candidates, fpHists, surveyMatchDetections, surveyMatchFpHists, includeForcedPhot]);
 
     const nondetectionsSeries = useMemo(() => {
         // Get non-detections from survey matches if included
-        const surveyNondets: Detection[] = [];
-        if (survey_matches && includeSurveyMatches) {
-            for (const [_survey, data] of Object.entries(survey_matches)) {
-                if (data?.prv_nondetections) {
-                    surveyNondets.push(...(Array.isArray(data.prv_nondetections) ? data.prv_nondetections : []));
-                }
-            }
-        }
-        
         const allNondets: Detection[] = [
             ...nondets.map(d => ({ ...d, source: 'main' as const })),
-            ...surveyNondets.map(d => ({ ...d, source: 'survey' as const }))
+            ...nondetsFromFpHists.map(d => ({ ...d, source: 'fphist' as const })),
+            ...surveyMatchNondetections.map(d => ({ ...d, source: 'survey' as const })),
+            ...surveyMatchNondetectionsFromFpHists.map(d => ({ ...d, source: 'survey' as const })),
         ];
         
         return allNondets
@@ -107,7 +151,7 @@ export default function Lightcurve({ data }: { data: LightcurveData }) {
                 source: d.source,
             }))
             .filter(d => Number.isFinite(d.t) && Number.isFinite(d.mag));
-    }, [nondets, survey_matches, includeSurveyMatches]);
+    }, [nondets, nondetsFromFpHists, surveyMatchNondetections, surveyMatchNondetectionsFromFpHists]);
 
     const bands = useMemo(() => {
         const set = new Set<string>();
@@ -387,6 +431,15 @@ export default function Lightcurve({ data }: { data: LightcurveData }) {
                                     <span className="text-gray-600 dark:text-gray-300">Other surveys</span>
                                 </label>
                             )}
+                            <label className="flex items-center gap-2 text-xs cursor-pointer select-none px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-slate-700">
+                                <input 
+                                    type="checkbox" 
+                                    checked={includeForcedPhot}
+                                    onChange={(e) => setIncludeForcedPhot(e.target.checked)}
+                                    className="w-4 h-4"
+                                />
+                                <span className="text-gray-600 dark:text-gray-300">Forced Phot</span>
+                            </label>
                             <button onClick={() => setDialogOpen(true)} title="Expand" className="p-1 rounded hover:bg-slate-100">
                                 <Maximize2 className="w-4 h-4 text-gray-600" />
                             </button>
@@ -614,7 +667,10 @@ export default function Lightcurve({ data }: { data: LightcurveData }) {
                                 <div className="font-medium">Band: {String(tooltip.band).toUpperCase()}{tooltip.nondet ? ' (non-det)' : ''}</div>
                                 <div>MJD: {tooltip.t?.toFixed(3)}</div>
                                 {!tooltip.nondet && (
-                                    <div>Mag: {tooltip.mag?.toFixed(3)} {tooltip.sigma !== undefined && Number.isFinite(tooltip.sigma) && tooltip.sigma > 0 ? `± ${tooltip.sigma?.toFixed(3)}` : ''}</div>
+                                    <>
+                                        <div>Mag: {tooltip.mag?.toFixed(3)} {tooltip.sigma !== undefined && Number.isFinite(tooltip.sigma) && tooltip.sigma > 0 ? `± ${tooltip.sigma?.toFixed(3)}` : ''}</div>
+                                        <div>SNR: {tooltip.sigma && tooltip.sigma > 0 ? (tooltip.mag! / tooltip.sigma).toFixed(2) : 'N/A'}</div>
+                                    </>
                                 )}
                                 <div>Lim mag: {tooltip.mag?.toFixed(3)}</div>
                             </div>

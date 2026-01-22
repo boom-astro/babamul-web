@@ -297,7 +297,7 @@ function applyColorMap(image: number[], colorMap: "gray" | "bone" = "gray") {
   return rgba_image;
 }
 
-export function bytes2image(bytes: Uint8Array | string | ArrayBuffer | undefined, survey: "ztf" | "lsst", type: string = "science", colorMap: "gray" | "bone" = "gray"): string | null {
+export function bytes2image(bytes: Uint8Array | string | ArrayBuffer | undefined, survey: "ztf" | "lsst" | "ZTF" | "LSST", type: string = "science", colorMap: "gray" | "bone" = "gray", rotated: boolean = true): string | null {
   let naxis1: number;
   let naxis2: number;
   let rotpa: number | null;
@@ -377,7 +377,7 @@ export function bytes2image(bytes: Uint8Array | string | ArrayBuffer | undefined
   // that is big enough for the rotated image without cropping
   // so, we want to compute what the new size should be
   // then we create a new array of that size, and we copy the rotated pixels into it
-  if (rotpa !== null) {
+  if (rotpa !== null && rotated) {
     const angleRad = (rotpa * Math.PI) / 180;
     const cosAngle = Math.cos(angleRad);
     const sinAngle = Math.sin(angleRad);
@@ -454,7 +454,7 @@ export function bytes2image(bytes: Uint8Array | string | ArrayBuffer | undefined
   // also reverse north and south to have north up, if survey is lsst
   const finalWidth = rotpa !== null ? naxis1 : NAXIS_STANDARD;
   const finalHeight = rotpa !== null ? naxis2 : NAXIS_STANDARD;
-  if (survey === "lsst") {
+  if (survey.toLocaleLowerCase() === "lsst") {
     const finalImage: Array<[number, number, number, number]> = new Array(finalWidth * finalHeight);
     for (let y = 0; y < finalHeight; y++) {
       for (let x = 0; x < finalWidth; x++) {

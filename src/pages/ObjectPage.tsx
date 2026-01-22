@@ -81,8 +81,6 @@ export default function ObjectPage() {
                 for (const k of altDecKeys) if (rest[k] !== undefined && mDec === null) mDec = tryNum(rest[k]);
               }
 
-              console.log("Match coordinates:", mRa, mDec);
-
               let separation_arcsec: number | null = null;
               if (srcRa != null && srcDec != null && mRa != null && mDec != null && Number.isFinite(mRa) && Number.isFinite(mDec)) {
                 try {
@@ -92,8 +90,6 @@ export default function ObjectPage() {
                   separation_arcsec = null;
                 }
               }
-
-              console.log("Computed separation (arcsec):", separation_arcsec);
 
               return {
                 ...rest,

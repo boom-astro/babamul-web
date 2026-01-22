@@ -156,8 +156,8 @@ export default function CentroidPlot() {
 
   return (
     <>
-    <Card data-slot="card" className="col-span-1">
-      <CardContent>
+    <Card data-slot="card" className="col-span-1 h-full flex flex-col">
+      <CardContent className="flex-1 flex flex-col">
         <div className="pt-0 pb-1 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <CardTitle className="text-lg">Centroid Plot</CardTitle>
@@ -178,7 +178,7 @@ export default function CentroidPlot() {
         {!points || points.length === 0 ? (
           <div className="text-sm text-gray-500">No previous detections available to compute centroid.</div>
         ) : (
-          <div className="flex flex-col">
+          <div className="flex flex-col h-full">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {(() => {
@@ -215,7 +215,7 @@ export default function CentroidPlot() {
               </div>
             </div>
 
-            <div ref={containerRef} className="w-full relative">
+            <div ref={containerRef} className="w-full relative flex-1 flex items-center justify-center">
               <svg viewBox={`0 0 ${size} ${size}`} className="block mx-auto bg-transparent w-full h-auto" style={{ maxWidth: size }}>
                 {/* center lines */}
                 <line x1={padding} y1={size/2} x2={size-padding} y2={size/2} stroke="#e5e7eb" strokeWidth={1} />
@@ -447,8 +447,8 @@ export default function CentroidPlot() {
               )}
             </div>
 
-            <div className="mt-2 text-xs text-gray-400 p-0">
-                <div>Points: {points.length} · maxSep: {(Math.max(0, ((() => { const s = points.map(p => Math.sqrt(p.x*p.x + p.y*p.y)).filter(n=>Number.isFinite(n)); return s.length?Math.max(...s):0 })())))?.toFixed(3)}″ · zoom: {maxOffsetArcsec.toFixed(3)}″</div>
+            <div className="mt-auto text-xs text-gray-400 p-0 flex-shrink-0 min-w-0 overflow-hidden">
+                <div className="truncate">Points: {points.length} · maxSep: {(Math.max(0, ((() => { const s = points.map(p => Math.sqrt(p.x*p.x + p.y*p.y)).filter(n=>Number.isFinite(n)); return s.length?Math.max(...s):0 })())))?.toFixed(3)}″ · zoom: {maxOffsetArcsec.toFixed(3)}″</div>
                 {/* <div className="text-xs text-gray-600">Offsets shown in arcsec relative to centroid (0,0).</div> */}
             </div>
           </div>

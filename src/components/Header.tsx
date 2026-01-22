@@ -28,7 +28,8 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import { useState, useMemo } from "react";
 import { Badge } from "@/components/ui/badge"
 import { Button } from './ui/button';
-import { IconGalaxy, IconMeteor, IconSparkles, IconStar, IconStars } from '@tabler/icons-react';
+import { IconGalaxy, IconMeteor, IconSparkles, IconStar, IconStars, IconRotate2 } from '@tabler/icons-react';
+import { Maximize2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -184,6 +185,7 @@ export default function Header({
   }) {
     const [lightboxOpen, setLightboxOpen] = useState(false);
     const [band, setBand] = useState<string>("all");
+    const [rotated, setRotated] = useState(true);
 
     const objectId = data.object_id ?? "";
     const ra = data.candidate?.ra?.toFixed(6) ?? "-";
@@ -221,9 +223,9 @@ export default function Header({
 
     const survey = objectId.startsWith("ZTF") ? "ztf" : "lsst";
 
-    const scienceImage = bytes2image(data.cutout_science, survey, "science", colorMap);
-    const templateImage = bytes2image(data.cutout_template, survey, "template", colorMap);
-    const differenceImage = bytes2image(data.cutout_difference, survey, "difference", colorMap);
+    const scienceImage = bytes2image(data.cutout_science, survey, "science", colorMap, rotated);
+    const templateImage = bytes2image(data.cutout_template, survey, "template", colorMap, rotated);
+    const differenceImage = bytes2image(data.cutout_difference, survey, "difference", colorMap, rotated);
 
     const firstTime = first_det?.jd ? mjd_to_utc(jd_to_mjd(first_det.jd)).replace("T", ' ').replace("Z", "") : "-";
     const peakTime = peak_det?.jd ? mjd_to_utc(jd_to_mjd(peak_det.jd)).replace("T", ' ').replace("Z", "") : "-";
@@ -237,7 +239,27 @@ export default function Header({
     return (
       <Card className="@container/card col-span-1 @xl/main:col-span-2 gap-3 row-span-2">
         <CardHeader className="gap-0">
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">{objectId}</CardTitle>
+          <div className="flex items-start justify-between gap-2">
+            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">{objectId}</CardTitle>
+            {!objectId.startsWith("ZTF") && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setRotated(!rotated)}
+                    className={`transition-colors ${rotated ? 'bg-primary/20 text-primary hover:bg-primary/30' : 'opacity-50 hover:opacity-75'}`}
+                    aria-label={rotated ? "Disable image rotation" : "Enable image rotation"}
+                  >
+                    <IconRotate2 size={18} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  {rotated ? "Disable rotation" : "Enable rotation"}
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
           <CardDescription className="flex flex-col gap-1">
             <div className='text-md'>RA: {ra}° | Dec: {dec}° &nbsp;</div>
             <div className="flex flex-row gap-2">
@@ -248,23 +270,26 @@ export default function Header({
         </CardHeader>
         <CardContent className="pb-0 flex flex-col gap-3">
             <div className="grid grid-cols-3 gap-3">
-              <div key="science" className="w-full relative group">
-                <button onClick={openLightbox} className="w-full h-full text-left">
+              <div key="science" className="w-full flex flex-col gap-1 items-center">
+                <button onClick={openLightbox} className="w-full h-full text-left relative group">
                   <img src={scienceImage ?? undefined} alt="Science" className="w-full h-auto object-cover rounded" style={{ imageRendering: 'pixelated' }}/>
+                    <Maximize2 className="absolute top-2 right-2 w-4 h-4 text-white opacity-0 group-hover:opacity-90 transition-opacity duration-150 pointer-events-none drop-shadow" />
                 </button>
-                <span className="absolute top-2 left-2 bg-black/60 text-white text-sm px-3 py-1 rounded-md backdrop-blur-sm opacity-100 group-hover:opacity-0 transition-opacity duration-150 pointer-events-none">Science</span>
+                <div className="text-xs font-medium text-muted-foreground">Science</div>
               </div>
-              <div key="template" className="w-full relative group">
-                <button onClick={openLightbox} className="w-full h-full text-left">
+              <div key="template" className="w-full flex flex-col gap-1 items-center">
+                <button onClick={openLightbox} className="w-full h-full text-left relative group">
                   <img src={templateImage ?? undefined} alt="Reference" className="w-full h-auto object-cover rounded" style={{ imageRendering: 'pixelated' }}/>
+                    <Maximize2 className="absolute top-2 right-2 w-4 h-4 text-white opacity-0 group-hover:opacity-90 transition-opacity duration-150 pointer-events-none drop-shadow" />
                 </button>
-                <span className="absolute top-2 left-2 bg-black/60 text-white text-sm px-3 py-1 rounded-md backdrop-blur-sm opacity-100 group-hover:opacity-0 transition-opacity duration-150 pointer-events-none">Reference</span>
+                <div className="text-xs font-medium text-muted-foreground">Reference</div>
               </div>
-              <div key="difference" className="w-full relative group">
-                <button onClick={openLightbox} className="w-full h-full text-left">
+              <div key="difference" className="w-full flex flex-col gap-1 items-center">
+                <button onClick={openLightbox} className="w-full h-full text-left relative group">
                   <img src={differenceImage ?? undefined} alt="Difference" className="w-full h-auto object-cover rounded" style={{ imageRendering: 'pixelated' }}/>
+                    <Maximize2 className="absolute top-2 right-2 w-4 h-4 text-white opacity-0 group-hover:opacity-90 transition-opacity duration-150 pointer-events-none drop-shadow" />
                 </button>
-                <span className="absolute top-2 left-2 bg-black/60 text-white text-sm px-3 py-1 rounded-md backdrop-blur-sm opacity-100 group-hover:opacity-0 transition-opacity duration-150 pointer-events-none">Difference</span>
+                <div className="text-xs font-medium text-muted-foreground">Difference</div>
               </div>
             </div>
             <div className="rounded-lg shadow-sm w-full border overflow-hidden">
@@ -387,20 +412,20 @@ export default function Header({
         </CardContent>
         <CardFooter className="flex flex-row justify-between">
           {/* next have a grid of icon buttons that link to other websites*/}
-          <div className="grid grid-cols-5 gap-4 w-full">
-          <Button variant="outline" className="w-full" onClick={() => window.open(`http://simbad.u-strasbg.fr/simbad/sim-coo?Coord=${ra}%20${dec}&Radius=0.08`, "_blank")}>
-              <IconSparkles /> Simbad
+          <div className="grid grid-cols-5 sm:grid-cols-5 gap-2 sm:gap-4 w-full">
+          <Button variant="outline" className="w-full text-xs sm:text-sm" onClick={() => window.open(`http://simbad.u-strasbg.fr/simbad/sim-coo?Coord=${ra}%20${dec}&Radius=0.08`, "_blank")}>
+              <IconSparkles className="hidden sm:inline mr-1" size={16} /> Simbad
             </Button>
-            <Button variant="outline" className="w-full" onClick={() => window.open(`https://www.wis-tns.org/search?ra=${ra}&decl=${dec}&radius=5&coords_unit=arcsec`, "_blank")}>
-              <IconStar /> TNS
+            <Button variant="outline" className="w-full text-xs sm:text-sm" onClick={() => window.open(`https://www.wis-tns.org/search?ra=${ra}&decl=${dec}&radius=5&coords_unit=arcsec`, "_blank")}>
+              <IconStar className="hidden sm:inline mr-1" size={16} /> TNS
             </Button>
-            <Button variant="outline" className="w-full" onClick={() => window.open(`https://www.legacysurvey.org/viewer?ra=${ra}&dec=${dec}&layer=ls-dr10&photoz-dr9&zoom=16&mark=${ra},${dec}`, "_blank")}>
-              <IconStars /> LS DR10
+            <Button variant="outline" className="w-full text-xs sm:text-sm" onClick={() => window.open(`https://www.legacysurvey.org/viewer?ra=${ra}&dec=${dec}&layer=ls-dr10&photoz-dr9&zoom=16&mark=${ra},${dec}`, "_blank")}>
+              <IconStars className="hidden sm:inline mr-1" size={16} /> LS DR10
             </Button>
-            <Button variant="outline" className="w-full" onClick={() => window.open(`https://ned.ipac.caltech.edu/cgi-bin/objsearch?search_type=Near+Position+Search&in_csys=Equatorial&in_equinox=J2000.0&ra=${ra}&dec=${dec}&radius=1.0&obj_sort=Distance+to+search+center&img_stamp=Yes`, "_blank")}>
-              <IconGalaxy /> NED
+            <Button variant="outline" className="w-full text-xs sm:text-sm" onClick={() => window.open(`https://ned.ipac.caltech.edu/cgi-bin/objsearch?search_type=Near+Position+Search&in_csys=Equatorial&in_equinox=J2000.0&ra=${ra}&dec=${dec}&radius=1.0&obj_sort=Distance+to+search+center&img_stamp=Yes`, "_blank")}>
+              <IconGalaxy className="hidden sm:inline mr-1" size={16} /> NED
             </Button>
-            <Button variant="outline" className="w-full"
+            <Button variant="outline" className="w-full text-xs sm:text-sm"
               onClick={() =>
                 toast("Not implemented yet", {
                   description: "Crossmatching against the MPC is not implemented yet",
@@ -411,7 +436,7 @@ export default function Header({
                 })
               }
             >
-              <IconMeteor /> MPC
+              <IconMeteor className="hidden sm:inline mr-1" size={16} /> MPC
             </Button>
           </div>
         </CardFooter>
