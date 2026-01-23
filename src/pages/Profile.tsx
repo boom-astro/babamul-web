@@ -56,6 +56,8 @@ export default function Profile() {
       // Auto-reveal the newly created credential's secret
       setRevealedSecrets(new Set([...revealedSecrets, newCred.kafka_username]));
       toast.success("Kafka credential created successfully");
+      // let's reload profile to reflect any changes
+      await loadData();
     } catch (error) {
       toast.error(`Failed to create credential: ${error}`);
     } finally {

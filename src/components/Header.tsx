@@ -36,12 +36,28 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
+import { radec2lb } from '@/lib/utils';
 
 
 dayjs.extend(utc);
 dayjs.extend(relativeTime);
 
 const colorMap = "bone";
+
+// Simple band color map
+const BAND_COLORS: Record<string, string> = {
+    g: '#38b000',
+    r: '#ef233c',
+    i: '#fcbf49',
+    z: '#f59e0b',
+    default: '#6b7280',
+};
+
+function toColor(band?: string) {
+    if (!band) return BAND_COLORS.default;
+    const k = String(band).toLowerCase();
+    return BAND_COLORS[k] ?? BAND_COLORS.default;
+}
 
 
 type Detection = {
@@ -191,6 +207,8 @@ export default function Header({
     const ra = data.candidate?.ra?.toFixed(6) ?? "-";
     const dec = data.candidate?.dec?.toFixed(6) ?? "-";
 
+    const [l, b] = radec2lb(Number(ra), Number(dec));
+
     const prvCandidates: Detection[] = data.prv_candidates ?? [];
     const prvNonDetections: Detection[] = data.prv_nondetections ?? [];
 
@@ -230,7 +248,6 @@ export default function Header({
     const firstTime = first_det?.jd ? mjd_to_utc(jd_to_mjd(first_det.jd)).replace("T", ' ').replace("Z", "") : "-";
     const peakTime = peak_det?.jd ? mjd_to_utc(jd_to_mjd(peak_det.jd)).replace("T", ' ').replace("Z", "") : "-";
     const lastTime = last_det?.jd ? mjd_to_utc(jd_to_mjd(last_det.jd)).replace("T", ' ').replace("Z", "") : "-";
-    const bandSummary = band === "all" ? "Showing all bands" : `Showing ${band}-band only`;
 
     function openLightbox() {
       setLightboxOpen(true);
@@ -261,7 +278,16 @@ export default function Header({
             )}
           </div>
           <CardDescription className="flex flex-col gap-1">
-            <div className='text-md'>RA: {ra}° | Dec: {dec}° &nbsp;</div>
+            <div className="flex flex-row flex-wrap">
+              <div className='text-md md:text-sm cursor-pointer hover:text-blue-500' onClick={() => { 
+                navigator.clipboard.writeText(`${ra}, ${dec}`)
+                toast.success("Copied RA/Dec to clipboard");
+              }}>RA: {ra}° | Dec: {dec}° &nbsp;</div>
+              <div className='text-md md:text-sm cursor-pointer hover:text-blue-500' onClick={() => {
+                navigator.clipboard.writeText(`l,b = ${l.toFixed(6)}, ${b.toFixed(6)}`)
+                toast.success("Copied Galactic Coordinates to clipboard");
+              }}>(l,b = {l.toFixed(6)}°, {b.toFixed(6)}°)</div>
+            </div>
             <div className="flex flex-row gap-2">
               <SurveyMatchesBadges survey_matches={data.survey_matches} />
               <ClassificationBadges data={data} />
@@ -316,7 +342,15 @@ export default function Header({
                   </thead>
                   <tbody className="divide-y">
                     <tr>
-                      <td className="py-4 px-3 sm:px-4 font-medium">{band === "all" ? "Showing all bands" : <span className="text-orange-500">Showing {band}-band only</span>}</td>
+                      <td className="py-4 px-3 sm:px-4 font-medium">
+                        <span className="font-medium">
+                          {band === "all" ? "Showing all bands" : (
+                            <>
+                              Showing <span style={{ color: toColor(band) }}>{band}-band</span> only
+                            </>
+                          )}
+                        </span>
+                      </td>
                       <td className="py-4 px-3 sm:px-4 font-medium">{age} days</td>
                       <td className="py-4 px-3 sm:px-4 font-medium">{nb_detections}</td>
                       <td className="py-4 px-3 sm:px-4 font-medium">{nb_nondetections}</td>
@@ -337,7 +371,13 @@ export default function Header({
                 </Select>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                   <span className="text-muted-foreground">Band</span>
-                  <span className={`font-medium ${band === "all" ? "" : "text-orange-500"}`}>{bandSummary}</span>
+                  <span className="font-medium">
+                    {band === "all" ? "Showing all bands" : (
+                      <>
+                        Showing <span style={{ color: toColor(band) }}>{band}-band</span> only
+                      </>
+                    )}
+                  </span>
                   <span className="text-muted-foreground">Age</span>
                   <span className="font-medium">{age} days</span>
                   <span className="text-muted-foreground">Detections</span>

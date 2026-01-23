@@ -39,7 +39,7 @@ type MapAlertResult = { binary: BinaryFamilies; multiclass: Record<string, Multi
 
 type AlertLike = {
   classifications?: Record<string, number>;
-  candidate?: { drb?: number; sgscore1?: number; distpsnr1?: number };
+  candidate?: { drb?: number; sgscore1?: number; distpsnr1?: number, reliability?: number };
   classifications_history?: Record<string, number>[];
   cross_matches?: Record<string, Array<{ ra?: number; dec?: number; score?: number, distance_arcsec?: number }>>;
 };
@@ -78,17 +78,19 @@ function mapAlertClassifications(alert: unknown): MapAlertResult {
   }
 
   if (a.candidate?.drb !== undefined) {
-    const drbHistory = historySnapshots.length > 0
-      ? historySnapshots
-      : [{ drb: a.candidate.drb ?? 0 }];
     mapped.binary['drb'] = [
       {
         name: 'Real/Bogus',
         score: a.candidate.drb ?? 0,
-        history: drbHistory.map((snapshot: Record<string, number>, idx: number) => ({
-          epoch: idx + 1,
-          score: snapshot.drb ?? a.candidate?.drb ?? 0,
-        })),
+        history: []
+      },
+    ];
+  } else if (a.candidate?.reliability !== undefined) {
+    mapped.binary['reliability'] = [
+      {
+        name: 'Real/Bogus',
+        score: a.candidate.reliability ?? 0,
+        history: []
       },
     ];
   }
@@ -165,11 +167,6 @@ const CompactHeatmap = ({ name, score, showTrend, history, isStatic, separation,
         <div className="text-sm font-semibold truncate flex-1 pr-2">{name}</div>
         {showTrend && history && history.length > 1 && !isStatic && (
           <TrendIcon className={`w-3.5 h-3.5 flex-shrink-0 ${trendColor}`} />
-        )}
-        {isStatic && (
-            <Badge variant="secondary" className="text-xs bg-white/20 text-white border-0 absolute top-1.5 right-1.5">
-                Static
-            </Badge>
         )}
       </div>
       <div className="flex items-end justify-between">
@@ -658,7 +655,7 @@ const ClassifierDisplay = ({ alert }: { alert?: unknown }) => {
     : (classifierData.binary[binaryFamily] ?? []);
 
   // Filter out static classifiers for temporal view
-  const temporalBinaryClassifiers: ClassifierEntry[] = displayedBinaryClassifiers.filter((c) => !c.isStatic);
+  const temporalBinaryClassifiers: ClassifierEntry[] = displayedBinaryClassifiers.filter((c) => !c.isStatic && c.history && c.history.length > 1);
 
   const totalEpochs = displayedBinaryClassifiers[0]?.history?.length ?? 0;
   const showTrend = viewMode === 'current' && totalEpochs > 1;
@@ -773,7 +770,7 @@ const ClassifierDisplay = ({ alert }: { alert?: unknown }) => {
                       </div>
                     ) : (
                       <div className="text-xs text-muted-foreground italic py-4 text-center bg-muted/30 rounded-lg border border-dashed border-muted-foreground/30">
-                        No time-variant classifiers available <br />(for the selected classifier type).
+                        No time-variant classifiers available, for the selected classifier type(s).
                       </div>
                     )}
                   </div>
