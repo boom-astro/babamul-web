@@ -4,7 +4,6 @@ import {
   IconDatabase,
   IconHelp,
   IconSearch,
-  IconSettings,
   IconBinaryTree,
 } from "@tabler/icons-react"
 
@@ -24,11 +23,6 @@ import {
 } from "@/components/ui/sidebar"
 
 const data = {
-  // user: {
-  //   name: "shadcn",
-  //   email: "m@example.com",
-  //   avatar: "/avatars/shadcn.jpg",
-  // },
   navMain: [
     {
       title: "Query",
@@ -37,11 +31,6 @@ const data = {
     },
   ],
   navSecondary: [
-    {
-      title: "Settings",
-      url: "#",
-      icon: IconSettings,
-    },
     {
       title: "Get Help",
       url: "#",

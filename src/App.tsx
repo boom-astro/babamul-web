@@ -24,7 +24,17 @@ const PRERELEASE_MODE = import.meta.env.VITE_PRERELEASE_MODE === 'true';
 
 function LoginPageWrapper() {
   const navigate = useNavigate();
-  return <Login onLoginSuccess={() => navigate('/')} />;
+  // after login, redirect to /query or to the page the user originally
+  // wanted to visit (minus login/signup/landing/root)
+  const location = useLocation();
+
+  return <Login onLoginSuccess={() => {
+    let from = (location.state as any)?.from?.pathname || '/query';
+    if (from === '/login' || from === '/signup' || from === '/landing' || from === '/') {
+      from = '/query';
+    }
+    navigate(from, { replace: true });
+  }} />;
 }
 
 export default function App() {
