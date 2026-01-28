@@ -88,12 +88,12 @@ export default function Profile() {
     });
   }
 
-  function toggleSecretVisibility(clientId: string) {
+  function toggleSecretVisibility(credentials_id: string) {
     const newSet = new Set(revealedSecrets);
-    if (newSet.has(clientId)) {
-      newSet.delete(clientId);
+    if (newSet.has(credentials_id)) {
+      newSet.delete(credentials_id);
     } else {
-      newSet.add(clientId);
+      newSet.add(credentials_id);
     }
     setRevealedSecrets(newSet);
   }
@@ -162,9 +162,9 @@ export default function Profile() {
           ) : (
             <div className="space-y-4">
               {credentials.map((cred) => {
-                const isRevealed = revealedSecrets.has(cred.kafka_username);
+                const isRevealed = revealedSecrets.has(cred.id);
                 return (
-                  <div key={cred.kafka_username} className="border rounded-lg p-4">
+                  <div key={cred.id} className="border rounded-lg p-4">
                     <div className="flex items-start justify-between mb-3 flex-row">
                         <h3 className="font-semibold">{cred.name}</h3>
                         <Button
@@ -178,7 +178,7 @@ export default function Profile() {
                     
                     <div className="space-y-3">
                       <div>
-                        <Label className="text-xs text-muted-foreground">Client ID</Label>
+                        <Label className="text-xs text-muted-foreground">Kafka Username</Label>
                         <div className="flex items-center gap-2 mt-1">
                           <code className="flex-1 bg-muted px-3 py-2 rounded text-sm font-mono">
                             {cred.kafka_username}
@@ -186,7 +186,7 @@ export default function Profile() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => copyToClipboard(cred.kafka_username, "Client ID")}
+                            onClick={() => copyToClipboard(cred.kafka_username, "Kafka Username")}
                           >
                             <Copy className="h-4 w-4" />
                           </Button>
@@ -194,7 +194,7 @@ export default function Profile() {
                       </div>
                       
                       <div>
-                        <Label className="text-xs text-muted-foreground">Client Secret</Label>
+                        <Label className="text-xs text-muted-foreground">Kafka Password</Label>
                         <div className="flex items-center gap-2 mt-1">
                           <code className="flex-1 bg-muted px-3 py-2 rounded text-sm font-mono">
                             {isRevealed ? cred.kafka_password : "••••••••••••••••"}
@@ -202,14 +202,14 @@ export default function Profile() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => toggleSecretVisibility(cred.kafka_username)}
+                            onClick={() => toggleSecretVisibility(cred.id)}
                           >
                             {isRevealed ? <IconEyeOff className="h-4 w-4" /> : <IconEye className="h-4 w-4" />}
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => copyToClipboard(cred.kafka_password, "Client Secret")}
+                            onClick={() => copyToClipboard(cred.kafka_password, "Kafka Password")}
                           >
                             <Copy className="h-4 w-4" />
                           </Button>
