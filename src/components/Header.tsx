@@ -191,11 +191,8 @@ export function TNSBadge({
 }: {
   cross_matches: Record<string, Array<{ ra?: number; dec?: number; name?: string; name_prefix?: string; score?: number; distance_arcsec?: number, type?: string, redshift?: string }>> | null | undefined;
 }) {
-  if (!cross_matches || !cross_matches.TNS) {
-    return null;
-  }
-  const tnsMatches = cross_matches.TNS;
-  if (tnsMatches.length === 0) {
+  const tnsMatches = cross_matches?.TNS;
+  if (!tnsMatches?.length) {
     return null;
   }
   const bestMatch = tnsMatches.reduce((a, b) => ( (a.distance_arcsec ?? Infinity) < (b.distance_arcsec ?? Infinity) ? a : b));
