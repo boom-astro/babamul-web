@@ -110,7 +110,7 @@ export function ClassificationBadges({
   const hasLspscHosted = lspscMatches.some((m) => (m.score ?? 1) < 0.5);
   
   return (
-    <div className="flex flex-row flex-wrap gap-2">
+    <>
       {(data.candidate?.drb ?? 1) < 0.2 && (
         <Badge variant="outline" className="text-sm font-semibold">
           Bogus?
@@ -141,7 +141,7 @@ export function ClassificationBadges({
           Hosted?
         </Badge>
       )}
-    </div>
+    </>
   )
 }
 
@@ -154,7 +154,7 @@ export function SurveyMatchesBadges({
     return null;
   }
   return (
-    <div className="flex flex-row flex-wrap gap-2">
+    <>
       {Object.entries(survey_matches).map(([survey, match]) => {
         // if match is null or objectId is missing, skip
         if (!match || !match.objectId) {
@@ -182,7 +182,45 @@ export function SurveyMatchesBadges({
           </Tooltip>
         );
       })}
-    </div>
+    </>
+  );
+}
+
+export function TNSBadge({
+  cross_matches,
+}: {
+  cross_matches: Record<string, Array<{ ra?: number; dec?: number; name?: string; name_prefix?: string; score?: number; distance_arcsec?: number, type?: string, redshift?: string }>> | null | undefined;
+}) {
+  if (!cross_matches || !cross_matches.TNS) {
+    return null;
+  }
+  const tnsMatches = cross_matches.TNS;
+  if (tnsMatches.length === 0) {
+    return null;
+  }
+  const bestMatch = tnsMatches.reduce((a, b) => ( (a.distance_arcsec ?? Infinity) < (b.distance_arcsec ?? Infinity) ? a : b));
+  const name_prefix = bestMatch.name_prefix ?? "AT";
+  const name = bestMatch.name ?? "unknown";
+  const type = bestMatch.type;
+  const distance = bestMatch.distance_arcsec != null ? `${bestMatch.distance_arcsec.toFixed(2)}"` : "unknown";
+  const redshift = Number.parseFloat(bestMatch?.redshift?.toString() ?? "NaN");
+  const url = `https://www.wis-tns.org/object/${name}`;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Badge
+          variant="default"
+          className="text-sm font-semibold cursor-pointer hover:underline flex items-center gap-1 bg-[#CA5D3B] text-white"
+          onClick={() => window.open(url, "_blank")}
+        >
+          <img src="https://www.wis-tns.org/themes/custom/astrot/favicon.png" alt="TNS" className="w-3 h-3" />
+          {name_prefix ?? ""} {name}{type ? `: ${type}` : ""}{redshift ? ` (z=${redshift.toFixed(2)})` : ""}
+        </Badge>
+      </TooltipTrigger>
+      <TooltipContent>
+        <span>Separation: {distance} {type ? `| Type: ${type}` : ""} {redshift ? `| Redshift: ${redshift}` : ""}</span>
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -288,7 +326,8 @@ export default function Header({
                 toast.success("Copied Galactic Coordinates to clipboard");
               }}>(l,b = {l.toFixed(6)}°, {b.toFixed(6)}°)</div>
             </div>
-            <div className="flex flex-row gap-2">
+            <div className="flex flex-row flex-wrap gap-2">
+              <TNSBadge cross_matches={data.cross_matches} />
               <SurveyMatchesBadges survey_matches={data.survey_matches} />
               <ClassificationBadges data={data} />
             </div>
