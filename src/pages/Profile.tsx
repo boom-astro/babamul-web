@@ -88,12 +88,12 @@ export default function Profile() {
     });
   }
 
-  function toggleSecretVisibility(credentials_id: string) {
+  function toggleSecretVisibility(credentialsId: string) {
     const newSet = new Set(revealedSecrets);
-    if (newSet.has(credentials_id)) {
-      newSet.delete(credentials_id);
+    if (newSet.has(credentialsId)) {
+      newSet.delete(credentialsId);
     } else {
-      newSet.add(credentials_id);
+      newSet.add(credentialsId);
     }
     setRevealedSecrets(newSet);
   }
