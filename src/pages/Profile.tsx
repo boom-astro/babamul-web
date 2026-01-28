@@ -4,10 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { fetchProfile, fetchKafkaCredentials, createKafkaCredential, type Profile as ProfileType, type KafkaCredential } from "@/lib/api";
-import { Copy, Plus } from "lucide-react";
+import { fetchProfile, fetchKafkaCredentials, createKafkaCredential, deleteKafkaCredential, type Profile as ProfileType, type KafkaCredential } from "@/lib/api";
+import { Copy, Plus, Trash } from "lucide-react";
 import { IconEye, IconEyeOff } from "@tabler/icons-react";
 
 export default function Profile() {
@@ -15,6 +14,7 @@ export default function Profile() {
   const [credentials, setCredentials] = useState<KafkaCredential[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [newCredentialName, setNewCredentialName] = useState("");
   const [revealedSecrets, setRevealedSecrets] = useState<Set<string>>(new Set());
@@ -62,6 +62,21 @@ export default function Profile() {
       toast.error(`Failed to create credential: ${error}`);
     } finally {
       setCreating(false);
+    }
+  }
+
+  async function handleDeleteCredential(credentialId: string) {
+    setDeleting(credentialId);
+    try {
+      await deleteKafkaCredential(credentialId);
+      setCredentials(credentials.filter(cred => cred.id !== credentialId));
+      toast.success("Kafka credential deleted successfully");
+      // let's reload profile to reflect any changes
+      await loadData();
+    } catch (error) {
+      toast.error(`Failed to delete credential: ${error}`);
+    } finally {
+      setDeleting(null);
     }
   }
 
@@ -150,11 +165,15 @@ export default function Profile() {
                 const isRevealed = revealedSecrets.has(cred.kafka_username);
                 return (
                   <div key={cred.kafka_username} className="border rounded-lg p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
+                    <div className="flex items-start justify-between mb-3 flex-row">
                         <h3 className="font-semibold">{cred.name}</h3>
-                        <Badge variant="outline" className="mt-1">Kafka Credential</Badge>
-                      </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setDeleting(cred.id)}
+                        >
+                          <Trash className="h-4 w-4" />
+                        </Button>
                     </div>
                     
                     <div className="space-y-3">
@@ -235,6 +254,30 @@ export default function Profile() {
             </Button>
             <Button onClick={handleCreateCredential} disabled={creating || !newCredentialName.trim()}>
               {creating ? "Creating..." : "Create"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Credential Dialog */}
+      <Dialog open={deleting !== null} onOpenChange={() => setDeleting(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Kafka Credential</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this Kafka credential? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleting(null)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={() => {
+              if (deleting) {
+                handleDeleteCredential(deleting);
+              }
+            }} disabled={deleting === null}>
+              Delete
             </Button>
           </DialogFooter>
         </DialogContent>
