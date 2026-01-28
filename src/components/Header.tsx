@@ -295,7 +295,7 @@ export default function Header({
       <Card className="@container/card col-span-1 @xl/main:col-span-2 gap-3 row-span-2">
         <CardHeader className="gap-0">
           <div className="flex items-start justify-between gap-2">
-            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">{objectId}</CardTitle>
+            <CardTitle className="text-2xl font-semibold tabular-nums md:text-3xl">{objectId}</CardTitle>
             {!objectId.startsWith("ZTF") && (
               <Tooltip>
                 <TooltipTrigger asChild>
