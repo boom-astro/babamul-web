@@ -4,10 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { fetchProfile, fetchKafkaCredentials, createKafkaCredential, type Profile as ProfileType, type KafkaCredential } from "@/lib/api";
-import { Copy, Plus } from "lucide-react";
+import { fetchProfile, fetchKafkaCredentials, createKafkaCredential, deleteKafkaCredential, type Profile as ProfileType, type KafkaCredential } from "@/lib/api";
+import { Copy, Plus, Trash } from "lucide-react";
 import { IconEye, IconEyeOff } from "@tabler/icons-react";
 
 export default function Profile() {
@@ -15,6 +14,7 @@ export default function Profile() {
   const [credentials, setCredentials] = useState<KafkaCredential[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [newCredentialName, setNewCredentialName] = useState("");
   const [revealedSecrets, setRevealedSecrets] = useState<Set<string>>(new Set());
@@ -54,12 +54,29 @@ export default function Profile() {
       setNewCredentialName("");
       setShowCreateDialog(false);
       // Auto-reveal the newly created credential's secret
-      setRevealedSecrets(new Set([...revealedSecrets, newCred.client_id]));
+      setRevealedSecrets(new Set([...revealedSecrets, newCred.kafka_username]));
       toast.success("Kafka credential created successfully");
+      // let's reload profile to reflect any changes
+      await loadData();
     } catch (error) {
       toast.error(`Failed to create credential: ${error}`);
     } finally {
       setCreating(false);
+    }
+  }
+
+  async function handleDeleteCredential(credentialId: string) {
+    setDeleting(credentialId);
+    try {
+      await deleteKafkaCredential(credentialId);
+      setCredentials(credentials.filter(cred => cred.id !== credentialId));
+      toast.success("Kafka credential deleted successfully");
+      // let's reload profile to reflect any changes
+      await loadData();
+    } catch (error) {
+      toast.error(`Failed to delete credential: ${error}`);
+    } finally {
+      setDeleting(null);
     }
   }
 
@@ -71,12 +88,12 @@ export default function Profile() {
     });
   }
 
-  function toggleSecretVisibility(clientId: string) {
+  function toggleSecretVisibility(credentialsId: string) {
     const newSet = new Set(revealedSecrets);
-    if (newSet.has(clientId)) {
-      newSet.delete(clientId);
+    if (newSet.has(credentialsId)) {
+      newSet.delete(credentialsId);
     } else {
-      newSet.add(clientId);
+      newSet.add(credentialsId);
     }
     setRevealedSecrets(newSet);
   }
@@ -86,7 +103,7 @@ export default function Profile() {
   }
 
   return (
-    <div className="px-4 lg:px-6 max-w-6xl mx-auto">
+    <div className="px-4 lg:px-6 w-full max-w-3xl mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl font-bold">Profile</h1>
         <p className="text-sm text-muted-foreground">Manage your account and Kafka credentials</p>
@@ -145,27 +162,31 @@ export default function Profile() {
           ) : (
             <div className="space-y-4">
               {credentials.map((cred) => {
-                const isRevealed = revealedSecrets.has(cred.client_id);
+                const isRevealed = revealedSecrets.has(cred.id);
                 return (
-                  <div key={cred.client_id} className="border rounded-lg p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
+                  <div key={cred.id} className="border rounded-lg p-4">
+                    <div className="flex items-start justify-between mb-3 flex-row">
                         <h3 className="font-semibold">{cred.name}</h3>
-                        <Badge variant="outline" className="mt-1">Kafka Credential</Badge>
-                      </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setDeleting(cred.id)}
+                        >
+                          <Trash className="h-4 w-4" />
+                        </Button>
                     </div>
                     
                     <div className="space-y-3">
                       <div>
-                        <Label className="text-xs text-muted-foreground">Client ID</Label>
+                        <Label className="text-xs text-muted-foreground">Kafka Username</Label>
                         <div className="flex items-center gap-2 mt-1">
                           <code className="flex-1 bg-muted px-3 py-2 rounded text-sm font-mono">
-                            {cred.client_id}
+                            {cred.kafka_username}
                           </code>
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => copyToClipboard(cred.client_id, "Client ID")}
+                            onClick={() => copyToClipboard(cred.kafka_username, "Kafka Username")}
                           >
                             <Copy className="h-4 w-4" />
                           </Button>
@@ -173,22 +194,22 @@ export default function Profile() {
                       </div>
                       
                       <div>
-                        <Label className="text-xs text-muted-foreground">Client Secret</Label>
+                        <Label className="text-xs text-muted-foreground">Kafka Password</Label>
                         <div className="flex items-center gap-2 mt-1">
                           <code className="flex-1 bg-muted px-3 py-2 rounded text-sm font-mono">
-                            {isRevealed ? cred.client_secret : "••••••••••••••••"}
+                            {isRevealed ? cred.kafka_password : "••••••••••••••••"}
                           </code>
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => toggleSecretVisibility(cred.client_id)}
+                            onClick={() => toggleSecretVisibility(cred.id)}
                           >
                             {isRevealed ? <IconEyeOff className="h-4 w-4" /> : <IconEye className="h-4 w-4" />}
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => copyToClipboard(cred.client_secret, "Client Secret")}
+                            onClick={() => copyToClipboard(cred.kafka_password, "Kafka Password")}
                           >
                             <Copy className="h-4 w-4" />
                           </Button>
@@ -233,6 +254,30 @@ export default function Profile() {
             </Button>
             <Button onClick={handleCreateCredential} disabled={creating || !newCredentialName.trim()}>
               {creating ? "Creating..." : "Create"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Credential Dialog */}
+      <Dialog open={deleting !== null} onOpenChange={() => setDeleting(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Kafka Credential</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this Kafka credential? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleting(null)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={() => {
+              if (deleting) {
+                handleDeleteCredential(deleting);
+              }
+            }} disabled={deleting === null}>
+              Delete
             </Button>
           </DialogFooter>
         </DialogContent>
