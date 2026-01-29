@@ -1,5 +1,8 @@
 import { useMemo, useState, useEffect, useRef } from "react";
 import mermaid from "mermaid";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -24,11 +27,11 @@ type TopicNode = {
 const BABAMUL_DOCS_URL = "https://raw.githubusercontent.com/boom-astro/boom/refs/heads/main/docs/babamul.md";
 
 /**
- * Extract the mermaid diagram from the markdown content.
- * Looks for the first ```mermaid code block after the "Multi-survey object appearance flow" heading.
+ * Extract the markdown content starting from "## Object appearance in output topics" heading.
+ * Removes the heading itself since it's shown in the dialog title.
  */
-function extractMermaidDiagram(markdown: string): string | null {
-  const match = markdown.match(/### Multi-survey object appearance flow\s+```mermaid\s+([\s\S]+?)```/);
+function extractObjectAppearanceSection(markdown: string): string | null {
+  const match = markdown.match(/## Object appearance in output topics\s+([\s\S]+)/);
   return match ? match[1].trim() : null;
 }
 
@@ -229,6 +232,78 @@ function MermaidDiagram({ chart }: { chart: string }) {
   return <div ref={containerRef} className="overflow-x-auto bg-black p-4 rounded-lg" aria-label="Mermaid diagram" />;
 }
 
+function MermaidBlock({ code }: { code: string }) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [rendered, setRendered] = useState(false);
+
+  useEffect(() => {
+    if (!containerRef.current || rendered) return;
+
+    const renderId = `mermaid-${Math.random().toString(36).slice(2, 8)}`;
+
+    mermaid.initialize({
+      startOnLoad: false,
+      securityLevel: 'loose',
+      theme: 'dark',
+      themeVariables: {
+        noteBkgColor: '#1a1a1a',
+        noteTextColor: '#e0e0e0',
+        actorTextColor: '#ffffff',
+        labelTextColor: '#ffffff'
+      }
+    });
+
+    mermaid.render(renderId, code).then(({ svg }) => {
+      if (containerRef.current) {
+        containerRef.current.innerHTML = svg;
+        setRendered(true);
+      }
+    }).catch((err) => {
+      console.error('Failed to render mermaid diagram', err);
+      if (containerRef.current) {
+        containerRef.current.innerHTML = '<div class="text-red-500">Failed to render diagram</div>';
+      }
+    });
+  }, [code, rendered]);
+
+  return <div ref={containerRef} className="overflow-x-auto bg-black p-4 rounded-lg my-4" aria-label="Mermaid diagram" />;
+}
+
+function MarkdownWithMermaid({ content }: { content: string }) {
+  return (
+    <div className="prose prose-sm dark:prose-invert max-w-none [&>p]:mb-4">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        rehypePlugins={[rehypeRaw]}
+        components={{
+          h1: ({ children }) => <h1 className="text-2xl font-bold mt-6 mb-4">{children}</h1>,
+          h2: ({ children }) => <h2 className="text-xl font-bold mt-5 mb-3">{children}</h2>,
+          h3: ({ children }) => <h3 className="text-lg font-semibold mt-4 mb-2">{children}</h3>,
+          h4: ({ children }) => <h4 className="text-base font-semibold mt-3 mb-2">{children}</h4>,
+          p: ({ children }) => <p className="mb-4">{children}</p>,
+          code({ inline, className, children, ...props }) {
+            const match = /language-(\w+)/.exec(className || '');
+            const language = match ? match[1] : '';
+
+            if (!inline && language === 'mermaid') {
+              const code = String(children).replace(/\n$/, '');
+              return <MermaidBlock code={code} />;
+            }
+
+            return (
+              <code className={className} {...props}>
+                {children}
+              </code>
+            );
+          },
+        }}
+      >
+        {content}
+      </ReactMarkdown>
+    </div>
+  );
+}
+
 function CopyablePre({ code, label = "Copy snippet" }: { code: string; label?: string }) {
   const handleCopy = () => {
     navigator.clipboard.writeText(code).then(
@@ -253,7 +328,7 @@ function CopyablePre({ code, label = "Copy snippet" }: { code: string; label?: s
 export default function KafkaDocs() {
   const [step, setStep] = useState<number>(0);
   const [selected, setSelected] = useState<string[]>([]);
-  const [mermaidDiagram, setMermaidDiagram] = useState<string>("");
+  const [objectAppearanceMarkdown, setObjectAppearanceMarkdown] = useState<string>("");
 
   // compute default collapsed nodes: groups whose immediate children are leaves
   function findLeafGroupKeys(nodes: TopicNode[]): string[] {
@@ -308,12 +383,15 @@ export default function KafkaDocs() {
       try {
         const response = await fetch(BABAMUL_DOCS_URL);
         const markdown = await response.text();
-        const diagram = extractMermaidDiagram(markdown);
-        if (diagram) {
-          setMermaidDiagram(diagram);
+        const section = extractObjectAppearanceSection(markdown);
+        if (section) {
+          console.log('Loaded markdown section:', section.substring(0, 200));
+          setObjectAppearanceMarkdown(section);
+        } else {
+          console.error('Failed to extract section from markdown');
         }
       } catch (err) {
-        console.error('Failed to load mermaid diagram:', err);
+        console.error('Failed to load markdown content:', err);
       }
     }
     loadDiagram();
@@ -459,31 +537,12 @@ export default function KafkaDocs() {
             <DialogHeader>
               <DialogTitle>Object appearance in output topics</DialogTitle>
             </DialogHeader>
-            <div className="prose prose-sm dark:prose-invert max-w-none [&>p]:mb-4">
-              <p>
-                When an object is observed by multiple surveys,
-                alerts include survey match data in the{" "}
-                <code>survey_matches</code> field.
-                Topics follow the pattern: <code>babamul.{"{source_survey}"}.{"{other_survey}"}-match.*</code>.
-              </p>
-              <p>
-                On the first observation of a given object,
-                the alert has empty <code>survey_matches</code>.
-                When the object
-                is subsequently observed by another survey,
-                that alert includes information from
-                the other survey in its <code>survey_matches</code> field.
-                From that point forward, alerts on both streams include
-                <code>survey_matches</code> in their alerts.
-              </p>
-              <h3 className="mt-4 font-semibold">Multi-survey object appearance flow</h3>
-              <div className="mt-4">
-                {mermaidDiagram ? (
-                  <MermaidDiagram chart={mermaidDiagram} />
-                ) : (
-                  <div className="text-sm text-muted-foreground">Loading diagram...</div>
-                )}
-              </div>
+            <div>
+              {objectAppearanceMarkdown ? (
+                <MarkdownWithMermaid content={objectAppearanceMarkdown} />
+              ) : (
+                <div className="text-sm text-muted-foreground">Loading documentation...</div>
+              )}
             </div>
           </DialogContent>
         </Dialog>
