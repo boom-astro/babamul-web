@@ -163,14 +163,14 @@ export default function Lightcurve({ data }: { data: LightcurveData }) {
     // Domains
     const allTimes = [...detections.map(d => d.t), ...nondetectionsSeries.map(d => d.t)];
     const allMags = [...detections.map(d => d.mag), ...nondetectionsSeries.map(d => d.mag)];
+    const maxError = Math.max(...detections.map(d => Number(d.sigma)).filter(s => Number.isFinite(s) && s > 0) || [0]);
     const tMin = Math.min(...(allTimes.length ? allTimes : [0]));
     const tMax = Math.max(...(allTimes.length ? allTimes : [1]));
     const magMin = Math.min(...(allMags.length ? allMags : [0]));
     const magMax = Math.max(...(allMags.length ? allMags : [1]));
 
-    const padT = Math.max(1, (tMax - tMin) * 0.02);
-    const padMag = Math.max(0.5, (magMax - magMin) * 0.05);
-
+    const padT = Math.max(0.5, (tMax - tMin) * 0.02);
+    const padMag = Math.max(0.1, (magMax - magMin + 2 * maxError) * 0.05);
     const initialDomain = useMemo(() => ({
         x0: tMin - padT,
         x1: tMax + padT,
