@@ -251,12 +251,26 @@ export default function Lightcurve({ data }: { data: LightcurveData }) {
         return arr;
     }, [domain, plotW]);
     const yTicks = useMemo(() => {
-        const step = 0.5;
+        // the number of steps should depend on the domain size;
+        // we should aim for around 4-6 steps, at "nice" intervals (0.1, 0.2, 0.5, 1, 2, 5, etc)
+        const range = domain.y1 - domain.y0;
+        const roughStep = range / 5;
+        const magnitudeSteps = [0.01, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10];
+        let step = magnitudeSteps[0];
+        for (const s of magnitudeSteps) {
+            if (roughStep <= s) {
+                step = s;
+                break;
+            }
+        }
         const arr: number[] = [];
-        const start = Math.ceil(domain.y0 / step) * step;
-        const end = Math.floor(domain.y1 / step) * step;
+        const start = Math.floor(domain.y0 / step) * step;
+        const end = Math.ceil(domain.y1 / step) * step;
         for (let val = start; val <= end; val += step) {
-            arr.push(val);
+            // reject those that are too close to the domain edges
+            if (val > domain.y0 + 1e-6 && val < domain.y1 - 1e-6) {
+                arr.push(val);
+            }
         }
         return arr.length > 0 ? arr : [domain.y0, domain.y1];
     }, [domain]);
