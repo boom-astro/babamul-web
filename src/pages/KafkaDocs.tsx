@@ -196,7 +196,17 @@ function MermaidDiagram({ chart }: { chart: string }) {
   const renderId = useMemo(() => `mermaid-${Math.random().toString(36).slice(2, 8)}`, []);
 
   useEffect(() => {
-    mermaid.initialize({ startOnLoad: false, securityLevel: 'loose' });
+    mermaid.initialize({
+      startOnLoad: false,
+      securityLevel: 'loose',
+      theme: 'dark',
+      themeVariables: {
+        noteBkgColor: '#1a1a1a',
+        noteTextColor: '#e0e0e0',
+        actorTextColor: '#ffffff',
+        labelTextColor: '#ffffff'
+      }
+    });
   }, []);
 
   useEffect(() => {
