@@ -462,7 +462,7 @@ export default function KafkaDocs() {
             <div className="prose prose-sm dark:prose-invert max-w-none [&>p]:mb-4">
               <p>
                 When an object is observed by multiple surveys,
-                alerts include survey match data in the
+                alerts include survey match data in the{" "}
                 <code>survey_matches</code> field.
                 Topics follow the pattern: <code>babamul.{"{source_survey}"}.{"{other_survey}"}-match.*</code>.
               </p>
