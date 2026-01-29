@@ -21,39 +21,16 @@ type TopicNode = {
   children?: TopicNode[];
 };
 
-const MULTI_SURVEY_MERMAID = `sequenceDiagram
-    participant LSST as LSST
-    participant ZTF as ZTF
-    participant Stream as Babamul topics
+const BABAMUL_DOCS_URL = "https://raw.githubusercontent.com/boom-astro/boom/refs/heads/main/docs/babamul.md";
 
-    Note over LSST,Stream: Day 1: First observation by LSST
-    LSST->>Stream: Object discovered (stellar)
-    rect rgb(95, 63, 45)
-    Note over Stream: Topic: babamul.lsst.no-ztf-match.stellar<br/><br/>Survey matches: none
-    end
-
-    Note over ZTF,Stream: Day 3: ZTF observes same object
-    ZTF->>Stream: Object observed (stellar)
-    rect rgb(45, 63, 95)
-    Note over Stream: Topic: babamul.ztf.lsst-match.stellar<br/><br/>Survey matches: lsst
-    end
-
-    Note over LSST,Stream: Day 5: LSST observes again
-    LSST->>Stream: Object re-observed (stellar)
-    rect rgb(45, 95, 63)
-    Note over Stream: Topic: babamul.lsst.ztf-match.stellar<br/><br/>Survey matches: ztf
-    end
-
-    Note over ZTF,Stream: Day 7+: LSST and ZTF continue observing
-    ZTF->>Stream: Subsequent observations
-    rect rgb(45, 63, 95)
-    Note over Stream: Topic: babamul.ztf.lsst-match.stellar<br/><br/>Survey matches: lsst
-    end
-    LSST->>Stream: Subsequent observations
-    rect rgb(45, 95, 63)
-    Note over Stream: Topic: babamul.lsst.ztf-match.stellar<br/><br/>Survey matches: ztf
-    end
-`;
+/**
+ * Extract the mermaid diagram from the markdown content.
+ * Looks for the first ```mermaid code block after the "Multi-survey object appearance flow" heading.
+ */
+function extractMermaidDiagram(markdown: string): string | null {
+  const match = markdown.match(/### Multi-survey object appearance flow\s+```mermaid\s+([\s\S]+?)```/);
+  return match ? match[1].trim() : null;
+}
 
 const TOPIC_TREE: TopicNode[] = [
   {
@@ -242,7 +219,6 @@ function MermaidDiagram({ chart }: { chart: string }) {
   return <div ref={containerRef} className="overflow-x-auto bg-black p-4 rounded-lg" aria-label="Mermaid diagram" />;
 }
 
-export default function BabamulDocs() {
 function CopyablePre({ code, label = "Copy snippet" }: { code: string; label?: string }) {
   const handleCopy = () => {
     navigator.clipboard.writeText(code).then(
@@ -267,6 +243,7 @@ function CopyablePre({ code, label = "Copy snippet" }: { code: string; label?: s
 export default function KafkaDocs() {
   const [step, setStep] = useState<number>(0);
   const [selected, setSelected] = useState<string[]>([]);
+  const [mermaidDiagram, setMermaidDiagram] = useState<string>("");
 
   // compute default collapsed nodes: groups whose immediate children are leaves
   function findLeafGroupKeys(nodes: TopicNode[]): string[] {
@@ -313,6 +290,23 @@ export default function KafkaDocs() {
       }
     }
     loadCredentials();
+  }, []);
+
+  // Load mermaid diagram from GitHub
+  useEffect(() => {
+    async function loadDiagram() {
+      try {
+        const response = await fetch(BABAMUL_DOCS_URL);
+        const markdown = await response.text();
+        const diagram = extractMermaidDiagram(markdown);
+        if (diagram) {
+          setMermaidDiagram(diagram);
+        }
+      } catch (err) {
+        console.error('Failed to load mermaid diagram:', err);
+      }
+    }
+    loadDiagram();
   }, []);
 
   // Get selected credential details for code generation
@@ -474,7 +468,11 @@ export default function KafkaDocs() {
               </p>
               <h3 className="mt-4 font-semibold">Multi-survey object appearance flow</h3>
               <div className="mt-4">
-                <MermaidDiagram chart={MULTI_SURVEY_MERMAID} />
+                {mermaidDiagram ? (
+                  <MermaidDiagram chart={mermaidDiagram} />
+                ) : (
+                  <div className="text-sm text-muted-foreground">Loading diagram...</div>
+                )}
               </div>
             </div>
           </DialogContent>
