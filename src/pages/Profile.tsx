@@ -196,6 +196,7 @@ export default function Profile() {
                             setCredentialToDelete(cred.id)
                             setShowDeleteDialog(true)
                           }}
+                          disabled={deleting.has(cred.id) || creating.has(cred.id)}
                         >
                           <Trash className="h-4 w-4 text-destructive" />
                         </Button>
