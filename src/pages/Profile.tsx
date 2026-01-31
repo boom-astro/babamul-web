@@ -53,7 +53,7 @@ export default function Profile() {
     // Loading state
     const tempId = "loadingCred_" + Date.now();
     setCreating((ids) => new Set([...ids, tempId]));
-    const loadingCred={
+    const loadingCred = {
       id: tempId,
       name: newCredentialName.trim(),
       kafka_username: "...",
