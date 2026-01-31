@@ -89,6 +89,7 @@ export default function Profile() {
       setDeleting((ids) => new Set([...ids, idToDelete]));
       await deleteKafkaCredential(idToDelete);
       setCredentials(creds => creds.filter(c => c.id !== idToDelete));
+      setRevealedSecrets((ids) => new Set([...ids].filter(id => id !== idToDelete)));
       toast.success("Kafka credential deleted successfully");
     } catch (error) {
       toast.error(`Failed to delete credential: ${error}`);
