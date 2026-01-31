@@ -194,8 +194,8 @@ export default function Profile() {
                           variant="ghost"
                           size="icon"
                           onClick={() => {
-                            setCredentialToDelete(cred.id)
-                            setShowDeleteDialog(true)
+                            setCredentialToDelete(cred.id);
+                            setShowDeleteDialog(true);
                           }}
                           disabled={deleting.has(cred.id) || creating.has(cred.id)}
                         >
