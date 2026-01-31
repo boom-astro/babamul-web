@@ -70,6 +70,7 @@ export default function Profile() {
       setRevealedSecrets(new Set([...revealedSecrets, newCred.id]));
       toast.success("Kafka credential created successfully");
     } catch (error) {
+      setCredentials((creds) => creds.filter((c) => c.id !== tempId));
       toast.error(`Failed to create credential: ${error}`);
       await loadData();
     } finally {
