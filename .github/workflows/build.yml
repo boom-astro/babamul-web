@@ -10,5 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - run: cp .env.example .env
+
       - name: Build Docker image
         run: docker compose build
