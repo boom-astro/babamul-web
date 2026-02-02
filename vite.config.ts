@@ -19,6 +19,10 @@ const mermaidDependencies = [
   "dagre-d3-es",
   "vscode-languageserver-types",
   "entities",
+  // and other deps related to markdown-rendering:
+  "react-markdown",
+  "remark-gfm",
+  "rehype-raw",
 ]
 
 // https://vite.dev/config/
