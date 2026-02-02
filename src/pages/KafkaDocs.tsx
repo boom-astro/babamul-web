@@ -194,44 +194,6 @@ fn main() {
 `;
 }
 
-function MermaidDiagram({ chart }: { chart: string }) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const renderId = useMemo(() => `mermaid-${Math.random().toString(36).slice(2, 8)}`, []);
-
-  useEffect(() => {
-    mermaid.initialize({
-      startOnLoad: false,
-      securityLevel: 'loose',
-      theme: 'dark',
-      themeVariables: {
-        noteBkgColor: '#1a1a1a',
-        noteTextColor: '#e0e0e0',
-        actorTextColor: '#ffffff',
-        labelTextColor: '#ffffff'
-      }
-    });
-  }, []);
-
-  useEffect(() => {
-    if (!containerRef.current) return;
-    let canceled = false;
-    mermaid
-      .render(renderId, chart)
-      .then(({ svg }) => {
-        if (canceled || !containerRef.current) return;
-        containerRef.current.innerHTML = svg;
-      })
-      .catch((err) => {
-        console.error('Failed to render mermaid diagram', err);
-      });
-    return () => {
-      canceled = true;
-    };
-  }, [chart, renderId]);
-
-  return <div ref={containerRef} className="overflow-x-auto bg-black p-4 rounded-lg" aria-label="Mermaid diagram" />;
-}
-
 function MermaidBlock({ code }: { code: string }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [rendered, setRendered] = useState(false);
@@ -281,7 +243,7 @@ function MarkdownWithMermaid({ content }: { content: string }) {
           h3: ({ children }) => <h3 className="text-lg font-semibold mt-4 mb-2">{children}</h3>,
           h4: ({ children }) => <h4 className="text-base font-semibold mt-3 mb-2">{children}</h4>,
           p: ({ children }) => <p className="mb-4">{children}</p>,
-          code({ inline, className, children, ...props }) {
+          code({ inline, className, children, ...props }: any) {
             const match = /language-(\w+)/.exec(className || '');
             const language = match ? match[1] : '';
 

@@ -3,6 +3,24 @@ import tailwindcss from "@tailwindcss/vite"
 import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
 
+const mermaidDependencies = [
+  "mermaid",
+  "cytoscape",
+  "katex",
+  "chevrotain",
+  "parse5",
+  "langium",
+  "layout-base",
+  "lodash-es",
+  "micromark",
+  "dompurify",
+  "cose-base",
+  "marked",
+  "dagre-d3-es",
+  "vscode-languageserver-types",
+  "entities",
+]
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
@@ -21,6 +39,16 @@ export default defineConfig({
             if (id.includes("@dnd-kit")) return "dnd"
             if (id.includes("recharts")) return "charts"
             if (id.includes("lucide-react")) return "icons"
+
+            // Mermaid and its dependencies in their own chunk
+            // to avoid bloating other chunks
+            for (const dep of mermaidDependencies) {
+              if (id.includes(dep)) return "mermaid"
+            }
+
+            // bundle pako (used to render gzipped data) separately
+            if (id.includes("pako")) return "pako"
+
             return "vendor"
           }
         },
