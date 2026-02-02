@@ -95,7 +95,7 @@ const TOPIC_TREE: TopicNode[] = [
 const KAFKA_BOOTSTRAP = import.meta.env.VITE_KAFKA_DOMAIN ?? "kafka.boom.example.com:9092";
 
 function generatePython(topics: string[], groupId: string, offset: string, autoCommit: boolean, usernameVar = "<KAFKA_USERNAME>", passwordVar = "<KAFKA_PASSWORD>") {
-  let autoCommitStr = autoCommit ? "True" : "False";
+  const autoCommitStr = autoCommit ? "True" : "False";
   const topicsList = topics.map(t => `"${t}"`).join(',\n    ');
   return `import fastavro
 from io import BytesIO

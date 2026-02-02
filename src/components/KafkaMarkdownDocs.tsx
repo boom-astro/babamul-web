@@ -64,6 +64,7 @@ function MarkdownWithMermaid({ content }: { content: string }) {
           h3: ({ children }) => <h3 className="text-lg font-semibold mt-4 mb-2">{children}</h3>,
           h4: ({ children }) => <h4 className="text-base font-semibold mt-3 mb-2">{children}</h4>,
           p: ({ children }) => <p className="mb-4">{children}</p>,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           code({ inline, className, children, ...props }: any) {
             const match = /language-(\w+)/.exec(className || '');
             const language = match ? match[1] : '';
