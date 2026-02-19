@@ -23,11 +23,11 @@ interface SearchContentProps {
 
 const DEBOUNCE_MS = 400
 
-export function SearchContent({ 
-  onResultClick, 
+export function SearchContent({
+  onResultClick,
   maxResults = 10,
   autoFocus = true,
-  showFooter = true 
+  showFooter = true
 }: SearchContentProps) {
   const [searchValue, setSearchValue] = useState("")
   const [results, setResults] = useState<SearchResult[]>([])
@@ -117,7 +117,7 @@ export function SearchContent({
         // Skip search, results are already filtered correctly
         return
       }
-      
+
       performSearch(trimmed)
     }, DEBOUNCE_MS)
 
@@ -143,7 +143,7 @@ export function SearchContent({
             <Spinner className="h-6 w-6" />
           </div>
         )}
-        
+
         {!isSearching && results.length === 0 && searchValue && (
           <div className="relative flex items-center justify-center h-full text-center text-sm text-muted-foreground">
             <div>No objects found matching "{searchValue}"</div>
@@ -223,7 +223,7 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
             Search for any object ID from any survey
           </DialogDescription>
         </DialogHeader>
-        
+
         <SearchContent onResultClick={handleResultClick} />
       </DialogContent>
     </Dialog>

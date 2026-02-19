@@ -42,16 +42,16 @@ export default function Query() {
 
   async function submitAlertSearch(e?: FormEvent) {
     e?.preventDefault();
-    
+
     const hasObjectId = alertObjectId.trim();
     const hasCoords = ra && dec && radius;
-    
+
     // Validate that only one search method is used
     if (hasObjectId && hasCoords) {
       setError("Please use either Object ID or Position search, not both");
       return;
     }
-    
+
     if (!hasObjectId && !hasCoords) {
       setError("Please enter either an Object ID or Position search parameters");
       return;
@@ -59,7 +59,7 @@ export default function Query() {
 
     const params: AlertSearchParams = {};
     const searchType = hasObjectId ? 'object_id' : 'position';
-    
+
     if (hasObjectId) {
       params.object_id = alertObjectId.trim();
       analytics.trackAlertSearchSubmitted({
@@ -84,7 +84,7 @@ export default function Query() {
         has_distpsnr_filter: !!(minDistpsnr1 || maxDistpsnr1),
       });
     }
-    
+
     if (startJd) params.start_jd = parseFloat(startJd);
     if (endJd) params.end_jd = parseFloat(endJd);
     if (minMag) params.min_magpsf = parseFloat(minMag);
@@ -137,7 +137,7 @@ export default function Query() {
             </TabsList>
 
             <TabsContent value="object">
-              <SearchContent 
+              <SearchContent
                 onResultClick={(result) => {
                   window.location.href = `/objects/${result.survey}/${result.objectId}`;
                 }}
@@ -168,10 +168,10 @@ export default function Query() {
 
                   <div className="sm:col-span-4">
                     <Label htmlFor="alertObjectId" className={`text-xs font-medium mb-1 block ${ra || dec || radius ? 'text-muted-foreground opacity-50' : 'text-muted-foreground'}`}>Object ID</Label>
-                    <Input 
-                      id="alertObjectId" 
-                      value={alertObjectId} 
-                      onChange={e => setAlertObjectId(e.target.value)} 
+                    <Input
+                      id="alertObjectId"
+                      value={alertObjectId}
+                      onChange={e => setAlertObjectId(e.target.value)}
                       placeholder="Object ID (e.g. ZTF25aagbkaj)"
                       disabled={!!(ra || dec || radius)}
                       className={ra || dec || radius ? 'opacity-50' : ''}
@@ -182,12 +182,12 @@ export default function Query() {
 
                   <div className={alertObjectId ? 'opacity-50' : ''}>
                     <Label htmlFor="ra" className="text-xs font-medium mb-1 block text-muted-foreground">RA (deg)</Label>
-                    <Input 
-                      id="ra" 
-                      type="number" 
-                      step="any" 
-                      value={ra} 
-                      onChange={e => setRa(e.target.value)} 
+                    <Input
+                      id="ra"
+                      type="number"
+                      step="any"
+                      value={ra}
+                      onChange={e => setRa(e.target.value)}
                       placeholder="150.0"
                       disabled={!!alertObjectId}
                     />
@@ -195,12 +195,12 @@ export default function Query() {
 
                   <div className={alertObjectId ? 'opacity-50' : ''}>
                     <Label htmlFor="dec" className="text-xs font-medium mb-1 block text-muted-foreground">Dec (deg)</Label>
-                    <Input 
-                      id="dec" 
-                      type="number" 
-                      step="any" 
-                      value={dec} 
-                      onChange={e => setDec(e.target.value)} 
+                    <Input
+                      id="dec"
+                      type="number"
+                      step="any"
+                      value={dec}
+                      onChange={e => setDec(e.target.value)}
                       placeholder="2.5"
                       disabled={!!alertObjectId}
                     />
@@ -208,12 +208,12 @@ export default function Query() {
 
                   <div className={alertObjectId ? 'opacity-50' : ''}>
                     <Label htmlFor="radius" className="text-xs font-medium mb-1 block text-muted-foreground">Radius (arcsec)</Label>
-                    <Input 
-                      id="radius" 
-                      type="number" 
-                      step="any" 
-                      value={radius} 
-                      onChange={e => setRadius(e.target.value)} 
+                    <Input
+                      id="radius"
+                      type="number"
+                      step="any"
+                      value={radius}
+                      onChange={e => setRadius(e.target.value)}
                       placeholder="5.0"
                       disabled={!!alertObjectId}
                     />
@@ -310,7 +310,7 @@ export default function Query() {
             {error && (
               <div className="text-red-500 text-sm">{error}</div>
             )}
-            
+
             {loading && (
               <div className="space-y-4">
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
@@ -425,7 +425,7 @@ const AlertCard = memo(function AlertCard({ alert, survey }: { alert: Alert; sur
   }, [survey, alert.objectId]);
 
   return (
-    <div 
+    <div
       className="flex gap-4 p-4 border rounded-lg hover:bg-accent/50 cursor-pointer transition-colors"
       onClick={handleClick}
     >
