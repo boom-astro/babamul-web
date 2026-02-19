@@ -10,6 +10,7 @@ import api, { Alert, AlertSearchParams, Cutouts } from "@/lib/api";
 import { bytes2image } from "@/lib/imageProcessing";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SearchContent } from "@/components/search-dialog"
+import * as analytics from "@/lib/analytics";
 
 export default function Query() {
   const [activeTab, setActiveTab] = useState<"object" | "alerts">("object");
@@ -57,14 +58,33 @@ export default function Query() {
     }
 
     const params: AlertSearchParams = {};
+    const searchType = hasObjectId ? 'object_id' : 'position';
     
     if (hasObjectId) {
       params.object_id = alertObjectId.trim();
+      analytics.trackAlertSearchSubmitted({
+        survey: alertSurvey,
+        search_type: searchType,
+        object_id: alertObjectId,
+      });
     } else {
       params.ra = parseFloat(ra);
       params.dec = parseFloat(dec);
       params.radius_arcsec = parseFloat(radius);
+      analytics.trackAlertSearchSubmitted({
+        survey: alertSurvey,
+        search_type: searchType,
+        ra: params.ra,
+        dec: params.dec,
+        radius_arcsec: params.radius_arcsec,
+        has_date_filter: !!(startJd || endJd),
+        has_magnitude_filter: !!(minMag || maxMag),
+        has_drb_filter: !!(minDrb || maxDrb),
+        has_sgscore_filter: !!(minSgscore1 || maxSgscore1),
+        has_distpsnr_filter: !!(minDistpsnr1 || maxDistpsnr1),
+      });
     }
+    
     if (startJd) params.start_jd = parseFloat(startJd);
     if (endJd) params.end_jd = parseFloat(endJd);
     if (minMag) params.min_magpsf = parseFloat(minMag);
@@ -89,8 +109,14 @@ export default function Query() {
     try {
       const results = await api.fetchAlerts(alertSurvey, params);
       setAlerts(results);
+      analytics.trackAlertSearchCompleted({
+        survey: alertSurvey,
+        search_type: searchType,
+        result_count: results.length,
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch alerts");
+      analytics.trackError('alert_search', err, { survey: alertSurvey, search_type: searchType });
     } finally {
       setLoading(false);
     }
