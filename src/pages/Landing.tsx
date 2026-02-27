@@ -1,14 +1,24 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import api from '@/lib/api';
 import Kilonova from '@/components/Kilonova';
 import { IconNews, IconBrandPython } from '@tabler/icons-react';
+import { useEffect } from 'react';
 // Release mode flag - set VITE_PRERELEASE_MODE=true at build time to restrict app to landing page only
 const PRERELEASE_MODE = import.meta.env.VITE_PRERELEASE_MODE === 'true';
 
 export default function Landing() {
   const token = api.getTokenRecord();
   const loggedIn = !!token;
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Redirect logged-in users to /query unless they explicitly navigated here
+  useEffect(() => {
+    if (loggedIn && !(location.state as { explicit?: boolean })?.explicit) {
+      navigate('/query', { replace: true });
+    }
+  }, [loggedIn, navigate, location.state]);
 
   return (
     <div className="w-full min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-950 to-slate-900 text-white">

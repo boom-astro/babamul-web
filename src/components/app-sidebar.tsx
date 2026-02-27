@@ -77,7 +77,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
-              <Link to="/" className="flex items-center gap-2">
+              <Link to="/" state={{ explicit: true }} className="flex items-center gap-2">
                 {/* Collapsed version - stacked */}
                 <div className="hidden group-data-[collapsible=icon]:flex flex-col items-center justify-center leading-[1.1] text-md -ml-1">
                   <span>𒁀𒁀</span>
