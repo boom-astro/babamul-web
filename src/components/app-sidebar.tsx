@@ -5,6 +5,7 @@ import {
   IconHelp,
   IconSearch,
   IconBinaryTree,
+  IconPackage,
 } from "@tabler/icons-react"
 
 import { NavDocuments } from "@/components/nav-documents"
@@ -33,7 +34,7 @@ const data = {
   navSecondary: [
     {
       title: "Get Help",
-      url: "#",
+      url: "/help",
       icon: IconHelp,
     },
   ],
@@ -47,7 +48,15 @@ const data = {
       name: "API Documentation",
       url: "/docs/api",
       icon: IconDatabase,
-    }
+    },
+  ],
+  tools: [
+    {
+      name: "Python Client (PyPI)",
+      url: "https://pypi.org/project/babamul/",
+      icon: IconPackage,
+      external: true,
+    },
   ],
 }
 
@@ -57,7 +66,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-              <SidebarMenuButton
+            <SidebarMenuButton
               asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
@@ -79,6 +88,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain items={data.navMain} />
         <SidebarSeparator />
         <NavDocuments items={data.documentation} />
+        <SidebarSeparator />
+        <NavDocuments items={data.tools} label="Tools" />
         <SidebarSeparator />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
