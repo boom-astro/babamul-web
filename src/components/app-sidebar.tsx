@@ -6,6 +6,7 @@ import {
   IconSearch,
   IconBinaryTree,
   IconPackage,
+  IconNotebook,
 } from "@tabler/icons-react"
 
 import { NavDocuments } from "@/components/nav-documents"
@@ -55,6 +56,12 @@ const data = {
       name: "Python Client (PyPI)",
       url: "https://pypi.org/project/babamul/",
       icon: IconPackage,
+      external: true,
+    },
+    {
+      name: "Notebook Examples",
+      url: "https://github.com/boom-astro/babamul/tree/main/examples",
+      icon: IconNotebook,
       external: true,
     },
   ],
