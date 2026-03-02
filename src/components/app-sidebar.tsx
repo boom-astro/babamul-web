@@ -7,7 +7,7 @@ import {
   IconBinaryTree,
   IconPackage,
   IconNotebook,
-  IconBook
+  IconBook,
 } from "@tabler/icons-react"
 
 import { NavDocuments } from "@/components/nav-documents"
@@ -37,7 +37,7 @@ const data = {
     {
       title: "Acknowledgments",
       url: "/acknowledgments",
-      icon: IconBook
+      icon: IconBook,
     },
     {
       title: "Get Help",
