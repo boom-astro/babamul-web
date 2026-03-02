@@ -50,24 +50,21 @@ export default function Landing() {
         Read our paper
       </a>
 
-      <div className="relative max-w-6xl w-full px-6 lg:px-12 py-12 md:py-20">
-
+      <div className="relative max-w-6xl w-full px-6 lg:px-12 pb-8 pt-12 md:pt-20">
         <div className="relative z-10 max-w-3xl mx-auto text-center">
-          {/* <h1 className="text-4xl md:text-5xl font-extrabold leading-tight tracking-tight mb-4 fade-in-up">BabamulA real-time & multi-survey alert broker</h1> */}
-          {/*  let's break this down into 2 lines */}
-            <div className="fade-in-up mb-4 relative">
-              <div className="flex items-center justify-center gap-1 text-2xl md:text-3xl opacity-20 m-0 p-0 gap-10 mb-2 md:-mb-2">
-                <span className="text-slate-200">𒁀</span>
-                <span className="text-slate-400">·</span>
-                <span className="text-slate-200">𒁀</span>
-                <span className="text-slate-400">·</span>
-                <span className="text-slate-200">𒀯</span>
-              </div>
-              <h1 className="text-6xl md:text-8xl font-extrabold leading-tight tracking-tight relative z-10 mb-2">
-                Babamul
-              </h1>
+          <div className="fade-in-up mb-4 relative">
+            <div className="flex items-center justify-center text-2xl md:text-3xl opacity-20 m-0 p-0 gap-10 mb-2 md:-mb-2">
+              <span className="text-slate-200">𒁀</span>
+              <span className="text-slate-400">·</span>
+              <span className="text-slate-200">𒁀</span>
+              <span className="text-slate-400">·</span>
+              <span className="text-slate-200">𒀯</span>
             </div>
-            <h2 className="text-3xl md:text-5xl font-semibold leading-tight tracking-tight mb-6 fade-in-up">A real-time multi-survey alert broker for the LSST era.</h2>
+            <h1 className="text-6xl md:text-8xl font-extrabold leading-tight tracking-tight relative z-10 mb-2">
+              Babamul
+            </h1>
+          </div>
+          <h2 className="text-3xl md:text-5xl font-semibold leading-tight tracking-tight mb-6 fade-in-up">A real-time multi-survey alert broker for the LSST era.</h2>
           <p className="text-lg md:text-xl text-slate-200 mb-8 fade-in-up">Ingest, filter and stream optical transient alerts from ZTF and LSST at scale. Subscribe with Kafka, query with a flexible API, and build real-time alerting systems.</p>
 
           <div className="grid grid-cols-2 md:flex md:flex-row items-center justify-center gap-3 md:gap-4 fade-in-up">
@@ -114,6 +111,11 @@ export default function Landing() {
           ) : (
             <p className="mt-8 text-sm text-slate-400">Want to get started quickly? <Link to="/login" className="underline">Log in</Link> or <Link to="/signup" className="underline">create an account</Link>.</p>
           ))}
+          {/* Acknowledgments */}
+          <p className="mt-8 text-[11px] text-slate-500 text-center leading-relaxed max-w-3xl mx-auto fade-in-up">
+            The Babamul alerts broker and BOOM software infrastructure (du Laz et al. 2026) is co-developed by the California Institute of Technology and the University of Minnesota.
+            This work acknowledges support from the National Science Foundation through AST Award No. 2432476 (PI Kasliwal; co-PI Coughlin) and leverages experience from the Zwicky Transient Facility (co-PIs Graham and Kasliwal).
+          </p>
         </div>
       </div>
     </div>
