@@ -4,7 +4,7 @@ import api from '@/lib/api';
 import Kilonova from '@/components/Kilonova';
 import { IconNews, IconBrandPython } from '@tabler/icons-react';
 import { useEffect } from 'react';
-import { ACKNOWLEDGMENTS_TEXT, PAPER_URL } from '@/lib/utils';
+import { ACKNOWLEDGMENTS_TEXT, PAPER_URL } from '@/lib/constants';
 // Release mode flag - set VITE_PRERELEASE_MODE=true at build time to restrict app to landing page only
 const PRERELEASE_MODE = import.meta.env.VITE_PRERELEASE_MODE === 'true';
 

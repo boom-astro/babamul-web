@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { IconNews } from '@tabler/icons-react';
-import { ACKNOWLEDGMENTS_TEXT, PAPER_URL } from '@/lib/utils';
+import { ACKNOWLEDGMENTS_TEXT, PAPER_URL } from '@/lib/constants';
 
 export default function Acknowledgments() {
   return (
