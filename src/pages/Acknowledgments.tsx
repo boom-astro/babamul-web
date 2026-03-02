@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { IconNews } from '@tabler/icons-react';
+import { ACKNOWLEDGMENTS_TEXT, PAPER_URL } from '@/lib/utils';
 
 export default function Acknowledgments() {
   return (
@@ -7,17 +8,13 @@ export default function Acknowledgments() {
       <div>
         <h1 className="text-2xl font-semibold mb-3">Acknowledgments</h1>
         <p className="text-muted-foreground leading-relaxed">
-          The Babamul alerts broker and BOOM software infrastructure (du Laz et al. 2026)
-          is co-developed by the California Institute of Technology and the University of Minnesota.
-          This work acknowledges support from the National Science Foundation through
-          AST Award No. 2432476 (PI Kasliwal; co-PI Coughlin) and leverages experience
-          from the Zwicky Transient Facility (co-PIs Graham and Kasliwal).
+          {ACKNOWLEDGMENTS_TEXT}
         </p>
       </div>
 
       <div className="flex flex-col gap-4">
         <a
-          href="https://arxiv.org/abs/2511.00164"
+          href={PAPER_URL}
           target="_blank"
           rel="noopener noreferrer"
           className="group block no-underline"
