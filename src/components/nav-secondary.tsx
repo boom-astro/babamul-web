@@ -35,10 +35,10 @@ export function NavSecondary({
                     <span>{item.title}</span>
                   </Link>
                 ) : (
-                  <Link to={item.url} target="_blank" rel="noopener noreferrer">
+                  <a href={item.url} target="_blank" rel="noopener noreferrer">
                     <item.icon />
                     <span>{item.title}</span>
-                  </Link>
+                  </a>
                 )}
               </SidebarMenuButton>
             </SidebarMenuItem>
