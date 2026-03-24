@@ -347,6 +347,46 @@ export async function fetchObjCutouts(survey: string, objectId: string): Promise
   return (typeof result === 'object' && result ? (result as Cutouts) : {} as Cutouts);
 }
 
+export type DailyStat = {
+  date: string;
+  n_alerts: number;
+};
+
+export async function fetchStats(survey: string, startDate: string, endDate: string): Promise<DailyStat[]> {
+  const params = new URLSearchParams({ start_date: startDate, end_date: endDate });
+  const url = `${API_BASE}/surveys/${encodeURIComponent(survey)}/stats?${params.toString()}`;
+  const res = await fetchWithAuth(url);
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    throw new Error(`Fetch stats failed: ${res.status} ${txt}`);
+  }
+  const body = await parseResponseJson(res).catch(() => ({ data: [] }));
+  const result = unwrapData<unknown>(body, []);
+  return Array.isArray(result) ? (result as DailyStat[]) : [];
+}
+
+export type CatalogEntry = {
+  name: string;
+  count: number;
+  size_bytes: number;
+};
+
+export type CatalogStats = {
+  n_catalogs: number;
+  catalogs: CatalogEntry[];
+};
+
+export async function fetchCatalogStats(): Promise<CatalogStats> {
+  const url = `${API_BASE}/catalogs/stats`;
+  const res = await fetchWithAuth(url);
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    throw new Error(`Fetch catalog stats failed: ${res.status} ${txt}`);
+  }
+  const body = await parseResponseJson(res).catch(() => ({}));
+  return unwrapData<CatalogStats>(body, { n_catalogs: 0, catalogs: [] });
+}
+
 export type SearchResult = {
   objectId: string;
   ra: number;
@@ -403,14 +443,9 @@ export default {
   resetPassword,
   fetchObject,
   fetchProfile,
-  fetchKafkaCredentials,
-  createKafkaCredential,
-  deleteKafkaCredential,
-  fetchTokens,
-  createToken,
-  deleteToken,
   fetchAlerts,
   fetchAlertCutouts,
   fetchObjCutouts,
-  searchObjects,
+  fetchStats,
+  fetchCatalogStats,
 };

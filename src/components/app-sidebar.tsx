@@ -1,6 +1,7 @@
 import * as React from "react"
 import { Link } from "react-router-dom"
 import {
+  IconChartBar,
   IconDatabase,
   IconHelp,
   IconSearch,
@@ -30,6 +31,11 @@ const data = {
       title: "Query",
       url: "/query",
       icon: IconSearch,
+    },
+    {
+      title: "Stats",
+      url: "/stats",
+      icon: IconChartBar,
     },
   ],
   navSecondary: [
