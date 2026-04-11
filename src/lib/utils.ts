@@ -4,6 +4,26 @@ import { twMerge } from "tailwind-merge"
 const { PI } = Math;
 const rad = PI / 180;
 
+export const SURVEYS = ["ztf", "lsst"] as const;
+export type Survey = (typeof SURVEYS)[number];
+
+export const KAFKA_TOPICS = [
+  "babamul.ztf.no-lsst-match.stellar",
+  "babamul.ztf.lsst-match.stellar",
+  "babamul.ztf.no-lsst-match.hosted",
+  "babamul.ztf.lsst-match.hosted",
+  "babamul.ztf.no-lsst-match.hostless",
+  "babamul.ztf.lsst-match.hostless",
+  "babamul.lsst.no-ztf-match.stellar",
+  "babamul.lsst.ztf-match.stellar",
+  "babamul.lsst.no-ztf-match.hosted",
+  "babamul.lsst.ztf-match.hosted",
+  "babamul.lsst.no-ztf-match.hostless",
+  "babamul.lsst.ztf-match.hostless",
+  "babamul.lsst.no-ztf-match.unknown",
+  "babamul.lsst.ztf-match.unknown",
+] as const;
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }

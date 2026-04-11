@@ -347,28 +347,61 @@ export async function fetchObjCutouts(survey: string, objectId: string): Promise
   return (typeof result === 'object' && result ? (result as Cutouts) : {} as Cutouts);
 }
 
-export type DailyStat = {
+export type NightlyStat = {
   date: string;
-  n_alerts: number;
+  ztf?: number;
+  lsst?: number;
 };
 
-export async function fetchStats(survey: string, startDate: string, endDate: string): Promise<DailyStat[]> {
+export async function fetchStats(startDate: string, endDate: string, survey?: string): Promise<NightlyStat[]> {
   const params = new URLSearchParams({ start_date: startDate, end_date: endDate });
-  const url = `${API_BASE}/surveys/${encodeURIComponent(survey)}/stats?${params.toString()}`;
-  const res = await fetchWithAuth(url);
+  if (survey) params.set("survey", survey);
+  const url = `${API_BASE}/stats/nightly?${params.toString()}`;
+  const res = await fetch(url);
   if (!res.ok) {
     const txt = await res.text().catch(() => "");
     throw new Error(`Fetch stats failed: ${res.status} ${txt}`);
   }
   const body = await parseResponseJson(res).catch(() => ({ data: [] }));
   const result = unwrapData<unknown>(body, []);
-  return Array.isArray(result) ? (result as DailyStat[]) : [];
+  return Array.isArray(result) ? (result as NightlyStat[]) : [];
+}
+
+export type TopicInfo = {
+  name: string;
+  n_alerts: number;
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type AvroSchema = Record<string, any>;
+
+export async function fetchSchema(survey: string): Promise<AvroSchema> {
+  const url = `${API_BASE}/surveys/${encodeURIComponent(survey)}/schemas`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    throw new Error(`Fetch schema failed: ${res.status} ${txt}`);
+  }
+  const body = await parseResponseJson(res).catch(() => ({}));
+  return body as AvroSchema;
+}
+
+export async function fetchTopics(): Promise<TopicInfo[]> {
+  const url = `${API_BASE}/stats/kafka`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    throw new Error(`Fetch topics failed: ${res.status} ${txt}`);
+  }
+  const body = await parseResponseJson(res).catch(() => ({ data: [] }));
+  const result = unwrapData<unknown>(body, []);
+  return Array.isArray(result) ? (result as TopicInfo[]) : [];
 }
 
 export type CatalogEntry = {
   name: string;
-  count: number;
-  size_bytes: number;
+  count?: number;
+  size_bytes?: number;
 };
 
 export type CatalogStats = {
@@ -377,8 +410,8 @@ export type CatalogStats = {
 };
 
 export async function fetchCatalogStats(): Promise<CatalogStats> {
-  const url = `${API_BASE}/catalogs/stats`;
-  const res = await fetchWithAuth(url);
+  const url = `${API_BASE}/stats/catalogs?count=true&size=true`;
+  const res = await fetch(url);
   if (!res.ok) {
     const txt = await res.text().catch(() => "");
     throw new Error(`Fetch catalog stats failed: ${res.status} ${txt}`);

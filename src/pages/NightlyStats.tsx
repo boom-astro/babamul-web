@@ -5,37 +5,20 @@ import { Bar, BarChart, CartesianGrid, ReferenceArea, XAxis, YAxis } from "recha
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { Toggle } from "@/components/ui/toggle";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import api, { CatalogEntry, DailyStat } from "@/lib/api";
-
-const SURVEY_COLORS = {
-  ztf: {light: "#3b82f6", dark: "#3b82f6"},
-  lsst: {light: "#34d399", dark: "#34d399"},
-} as const;
+import api, { CatalogEntry, NightlyStat } from "@/lib/api";
+import { SURVEYS, type Survey } from "@/lib/utils";
 
 const chartConfig = {
-  ztf: {
-    label: "ZTF",
-    theme: SURVEY_COLORS.ztf,
-  },
-  lsst: {
-    label: "LSST",
-    theme: SURVEY_COLORS.lsst,
-  },
+  ztf: { label: "ZTF" },
+  lsst: { label: "LSST" },
 } satisfies ChartConfig;
-
-type Survey = "ztf" | "lsst";
-
-type MergedStat = {
-  date: string;
-  ztf?: number;
-  lsst?: number;
-};
 
 function formatDate(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
-function formatBytes(bytes: number): string {
+function formatBytes(bytes: number | undefined): string {
+  if (bytes === undefined) return "";
   if (bytes === 0) return "0 B";
   const units = ["B", "KB", "MB", "GB", "TB"];
   const i = Math.floor(Math.log(bytes) / Math.log(1024));
@@ -48,11 +31,10 @@ export default function NightlyStats() {
   const defaultStart = new Date();
   defaultStart.setMonth(defaultStart.getMonth() - 2);
 
-  const [surveys, setSurveys] = useState<Set<Survey>>(new Set(["ztf", "lsst"]));
+  const [surveys, setSurveys] = useState<Set<Survey>>(new Set(SURVEYS));
   const [startDate, setStartDate] = useState(formatDate(defaultStart));
   const [endDate, setEndDate] = useState(formatDate(defaultEnd));
-  const [ztfData, setZtfData] = useState<DailyStat[]>([]);
-  const [lsstData, setLsstData] = useState<DailyStat[]>([]);
+  const [statsData, setStatsData] = useState<NightlyStat[]>([]);
   const [catalogs, setCatalogs] = useState<CatalogEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -71,12 +53,8 @@ export default function NightlyStats() {
     setLoading(true);
     setError(null);
     try {
-      const [ztf, lsst] = await Promise.all([
-        api.fetchStats("ztf", startDate, endDate).catch(() => [] as DailyStat[]),
-        api.fetchStats("lsst", startDate, endDate).catch(() => [] as DailyStat[]),
-      ]);
-      setZtfData(ztf);
-      setLsstData(lsst);
+      const data = await api.fetchStats(startDate, endDate);
+      setStatsData(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch stats");
     } finally {
@@ -91,41 +69,24 @@ export default function NightlyStats() {
   useEffect(() => {
     api.fetchCatalogStats()
       .then((s) => setCatalogs(s.catalogs.sort((a, b) => a.name.localeCompare(b.name))))
-      .catch(() => {
-      });
+      .catch(() => {});
   }, []);
 
-  const mergedData = useMemo(() => {
-    const map = new Map<string, MergedStat>();
-    for (const d of ztfData) {
-      map.set(d.date, {date: d.date, ztf: d.n_alerts});
-    }
-    for (const d of lsstData) {
-      const existing = map.get(d.date);
-      if (existing) {
-        existing.lsst = d.n_alerts;
-      } else {
-        map.set(d.date, {date: d.date, lsst: d.n_alerts});
-      }
-    }
-    return Array.from(map.values()).sort((a, b) => a.date.localeCompare(b.date));
-  }, [ztfData, lsstData]);
-
   const visibleData = useMemo(() => {
-    if (surveys.has("ztf") && surveys.has("lsst")) return mergedData;
-    return mergedData.map((d) => ({
+    if (surveys.has("ztf") && surveys.has("lsst")) return statsData;
+    return statsData.map((d) => ({
       date: d.date,
       ...(surveys.has("ztf") ? {ztf: d.ztf} : {}),
       ...(surveys.has("lsst") ? {lsst: d.lsst} : {}),
     }));
-  }, [mergedData, surveys]);
+  }, [statsData, surveys]);
 
   const chartData = useMemo(() => {
     if (!zoomSlice) return visibleData;
     return visibleData.slice(zoomSlice[0], zoomSlice[1] + 1);
   }, [visibleData, zoomSlice]);
 
-  function handleMouseDown(e: { activeLabel?: string }) {
+  function startZoomSelection(e: { activeLabel?: string }) {
     if (e?.activeLabel) {
       selectingRef.current = true;
       setZoomLeft(e.activeLabel);
@@ -133,13 +94,13 @@ export default function NightlyStats() {
     }
   }
 
-  function handleMouseMove(e: { activeLabel?: string }) {
+  function updateZoomSelection(e: { activeLabel?: string }) {
     if (selectingRef.current && e?.activeLabel) {
       setZoomRight(e.activeLabel);
     }
   }
 
-  function handleMouseUp() {
+  function zoomIntoSelection() {
     if (selectingRef.current && zoomLeft && zoomRight && zoomLeft !== zoomRight) {
       const dates = visibleData.map(d => d.date);
       let li = dates.indexOf(zoomLeft);
@@ -154,7 +115,7 @@ export default function NightlyStats() {
     setZoomRight(null);
   }
 
-  function handleZoomReset() {
+  function resetZoom() {
     setZoomSlice(null);
   }
 
@@ -221,7 +182,7 @@ export default function NightlyStats() {
               </CardDescription>
             </div>
             {zoomSlice && (
-              <Toggle onPressedChange={handleZoomReset} className="text-xs text-muted-foreground hover:text-foreground underline">
+              <Toggle onPressedChange={resetZoom} className="text-xs text-muted-foreground hover:text-foreground underline">
                 Reset zoom
               </Toggle>
             )}
@@ -261,10 +222,11 @@ export default function NightlyStats() {
               <BarChart
                 data={chartData}
                 margin={{top: 4, right: 4, bottom: 0, left: 4}}
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-                onDoubleClick={handleZoomReset}
+                onMouseDown={startZoomSelection}
+                onMouseMove={updateZoomSelection}
+                onMouseUp={zoomIntoSelection}
+                onMouseLeave={zoomIntoSelection}
+                onDoubleClick={resetZoom}
               >
                 <CartesianGrid vertical={false}/>
                 <XAxis
@@ -338,8 +300,8 @@ export default function NightlyStats() {
                 {catalogs.map((c) => (
                   <TableRow key={c.name}>
                     <TableCell className="font-mono text-sm">{c.name}</TableCell>
-                    <TableCell className="text-right tabular-nums">{formatBytes(c.size_bytes)}</TableCell>
-                    <TableCell className="text-right tabular-nums">{c.count.toLocaleString()}</TableCell>
+                    <TableCell className="text-right tabular-nums">{formatBytes(c?.size_bytes)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{c?.count?.toLocaleString() || ""}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
