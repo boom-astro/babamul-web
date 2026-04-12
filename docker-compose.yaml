@@ -41,20 +41,6 @@ services:
       - traefik.http.middlewares.${STACK_NAME?Variable not set}-www-redirect.redirectregex.regex=^http(s)?://www.(${WEBAPP_DOMAIN?Variable not set})/(.*)
       # Redirect a domain with www to non-www
       - traefik.http.middlewares.${STACK_NAME?Variable not set}-www-redirect.redirectregex.replacement=http$${1}://${WEBAPP_DOMAIN?Variable not set}/$${3}
-      # Define HTTPS redirect middleware
-      - traefik.http.middlewares.https-redirect.redirectscheme.scheme=https
-      - traefik.http.middlewares.https-redirect.redirectscheme.permanent=true
-      # Security headers middleware
-      - traefik.http.middlewares.${STACK_NAME?Variable not set}-security-headers.headers.frameDeny=true
-      - traefik.http.middlewares.${STACK_NAME?Variable not set}-security-headers.headers.contentTypeNosniff=true
-      - traefik.http.middlewares.${STACK_NAME?Variable not set}-security-headers.headers.browserXssFilter=true
-      - traefik.http.middlewares.${STACK_NAME?Variable not set}-security-headers.headers.referrerPolicy=strict-origin-when-cross-origin
-      - traefik.http.middlewares.${STACK_NAME?Variable not set}-security-headers.headers.permissionsPolicy=camera=(), microphone=(), geolocation=()
-      - traefik.http.middlewares.${STACK_NAME?Variable not set}-security-headers.headers.stsSeconds=31536000
-      - traefik.http.middlewares.${STACK_NAME?Variable not set}-security-headers.headers.stsIncludeSubdomains=true
-      - traefik.http.middlewares.${STACK_NAME?Variable not set}-security-headers.headers.stsPreload=true
-      - "traefik.http.middlewares.${STACK_NAME?Variable not set}-security-headers.headers.contentSecurityPolicy=default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://us.i.posthog.com https://us-assets.i.posthog.com https://aladin.cds.unistra.fr; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' data: https: wss://${DOMAIN?Variable not set}:9093; worker-src 'self' blob:"
-      - traefik.http.middlewares.${STACK_NAME?Variable not set}-security-headers.headers.customResponseHeaders.Server=
       # Enable www redirection for HTTP and HTTPS
       - traefik.http.routers.${STACK_NAME?Variable not set}-web-http.middlewares=https-redirect,${STACK_NAME?Variable not set}-www-redirect
-      - traefik.http.routers.${STACK_NAME?Variable not set}-web-https.middlewares=${STACK_NAME?Variable not set}-www-redirect,${STACK_NAME?Variable not set}-compress,${STACK_NAME?Variable not set}-security-headers
+      - traefik.http.routers.${STACK_NAME?Variable not set}-web-https.middlewares=${STACK_NAME?Variable not set}-www-redirect,${STACK_NAME?Variable not set}-compress
