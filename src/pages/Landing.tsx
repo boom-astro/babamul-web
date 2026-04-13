@@ -22,7 +22,7 @@ export default function Landing() {
   }, [loggedIn, navigate, location.state]);
 
   return (
-    <div className="w-full min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-950 to-slate-900 text-white">
+    <div className="w-full min-h-screen flex items-center justify-center bg-linear-to-b from-slate-950 to-slate-900 text-white">
       <style>{`
         .hero-blob { animation: blob 18s infinite; opacity: 0.18 }
         @keyframes blob {
@@ -73,7 +73,7 @@ export default function Landing() {
               <Button className="w-full px-6 py-3 bg-white/90 hover:bg-white text-slate-900 shadow-md hover:shadow-xl transform transition duration-150 ease-out hover:-translate-y-0.5">Search for alerts</Button>
             </Link>
             <Link to="/stats" className="col-span-1">
-              <Button variant="outline" className="w-full px-6 py-3 bg-slate-800/40 border-slate-600 text-slate-100 hover:bg-slate-700/60 hover:text-white transform transition duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md flex items-center justify-center gap-2">
+              <Button className="w-full px-6 py-3 bg-white/90 hover:bg-white text-slate-900 shadow-md hover:shadow-xl transform transition duration-150 ease-out hover:-translate-y-0.5 flex items-center justify-center gap-2">
                 <IconChartBar className="w-4 h-4" />
                 Dashboard
               </Button>
