@@ -4,7 +4,7 @@ import { twMerge } from "tailwind-merge"
 const { PI } = Math;
 const rad = PI / 180;
 
-export const SURVEYS = ["ztf", "lsst"] as const;
+export const SURVEYS = ["lsst", "ztf"] as const;
 export type Survey = (typeof SURVEYS)[number];
 
 export const KAFKA_TOPICS = [
