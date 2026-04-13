@@ -90,7 +90,7 @@ function ZtfRules() {
 
         <div>
           <h3 className="mb-1 font-semibold text-chart-1">stellar</h3>
-          <h4 className="pb-1 font-semibold pl-3 text-chart-1/75">star-like</h4>
+          <h4 className="pb-1 pl-3 text-chart-1">star-like</h4>
           <ul className="text-sm list-disc pl-9">
             <li>
               <code>sgscore1 &gt; 0.76 <AND/> 0 &le; distpsnr1 &le; 2.0&Prime;</code>
@@ -109,7 +109,7 @@ function ZtfRules() {
               </ul>
             </li>
           </ul>
-          <h4 className="pt-3 pb-1 font-semibold pl-3 text-chart-1/75">near bright star</h4>
+          <h4 className="pt-3 pb-1 pl-3 text-chart-1">near bright star</h4>
           <ul className="text-sm list-disc pl-9">
             <li>
               <code>0 &le; neargaiabright &le; 20.0&Prime; <AND/> 0 &lt; maggaiabright &le; 12.0</code>

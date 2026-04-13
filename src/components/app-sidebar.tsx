@@ -34,7 +34,7 @@ const data = {
       icon: IconSearch,
     },
     {
-      title: "Stats",
+      title: "Dashboard",
       url: "/stats",
       icon: IconChartBar,
     },
