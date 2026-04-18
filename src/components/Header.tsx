@@ -246,8 +246,10 @@ export default function Header({
 
     const [l, b] = radec2lb(Number(ra), Number(dec));
 
-    const prvCandidates: Detection[] = data.prv_candidates ?? [];
-    const prvNonDetections: Detection[] = data.prv_nondetections ?? [];
+    const prvCandidates = useMemo<Detection[]>(() =>
+      data.prv_candidates ?? [], [data.prv_candidates]);
+    const prvNonDetections = useMemo<Detection[]>(() =>
+      data.prv_nondetections ?? [], [data.prv_nondetections]);
 
     const filteredCandidates = useMemo(() => {
       if (!band || band === "all") return prvCandidates;
@@ -401,7 +403,7 @@ export default function Header({
                     <tr>
                       <th className="py-3 px-3 sm:px-4 text-left font-medium">
                         <Select value={band} onValueChange={(v) => setBand(v)}>
-                          <SelectTrigger className="w-auto whitespace-nowrap xl:w-[180px]">
+                          <SelectTrigger className="w-auto whitespace-nowrap xl:w-45">
                             <SelectValue placeholder="Band(s)" />
                           </SelectTrigger>
                           <SelectContent>
@@ -557,7 +559,7 @@ export default function Header({
           </div>
         </CardFooter>
         <Dialog open={lightboxOpen} onOpenChange={(v) => setLightboxOpen(v)}>
-          <DialogContent className="!fixed inset-0 m-0 p-0 bg-background !max-w-none w-full h-full rounded-none overflow-hidden !top-0 !left-0 !translate-x-0 !translate-y-0 !border-none !shadow-none">
+          <DialogContent className="fixed! inset-0 m-0 p-0 bg-background max-w-none! w-full h-full rounded-none overflow-hidden top-0! left-0! translate-x-0! translate-y-0! border-none! shadow-none!">
             <DialogTitle className="sr-only">Cutouts</DialogTitle>
             <div className="w-full h-full flex items-center justify-center">
               <div className="w-[95%] h-[95%] bg-background rounded-md p-6 overflow-auto">
