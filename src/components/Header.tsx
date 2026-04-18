@@ -38,7 +38,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
-import { radec2lb } from '@/lib/utils';
+import { LSST, ZTF, radec2lb } from '@/lib/utils';
 
 
 dayjs.extend(utc);
@@ -101,14 +101,14 @@ export function ClassificationBadges({
 }) {
   const classifications = data.classifications ?? {};
   const properties = data.properties ?? {};
-  
+
   // Check LSPSC cross_matches for stellar/hosted classification
   const lspscMatches = data.cross_matches?.LSPSC ?? [];
   const hasLspscStellar = lspscMatches.some(
     (m) => (m.distance_arcsec ?? Infinity) < 1 && (m.score ?? 0) > 0.5
   );
   const hasLspscHosted = lspscMatches.some((m) => (m.score ?? 1) < 0.5);
-  
+
   return (
     <>
       {(data.candidate?.drb ?? 1) < 0.2 && (
@@ -276,7 +276,7 @@ export default function Header({
     }, [filteredCandidates]);
     const age = (first_det && last_det && first_det.jd != null && last_det.jd != null) ? Math.round((last_det.jd - first_det.jd) * 100) / 100 : "-";
 
-    const survey = objectId.startsWith("ZTF") ? "ztf" : "lsst";
+    const survey = objectId.startsWith("ZTF") ? ZTF : LSST;
 
     useEffect(() => {
       if (!data.objectId) return;
@@ -335,7 +335,7 @@ export default function Header({
           </div>
           <CardDescription className="flex flex-col gap-1">
             <div className="flex flex-row flex-wrap">
-              <div className='text-md md:text-sm cursor-pointer hover:text-blue-500' onClick={() => { 
+              <div className='text-md md:text-sm cursor-pointer hover:text-blue-500' onClick={() => {
                 navigator.clipboard.writeText(`${ra}, ${dec}`)
                 toast.success("Copied RA/Dec to clipboard");
               }}>RA: {ra}° | Dec: {dec}° &nbsp;</div>

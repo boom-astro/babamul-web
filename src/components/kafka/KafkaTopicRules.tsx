@@ -1,3 +1,4 @@
+import { LSST, ZTF } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -159,15 +160,15 @@ function ZtfRules() {
 
 export default function KafkaTopicRules() {
   return (
-    <Tabs defaultValue="lsst">
+    <Tabs defaultValue={LSST}>
       <TabsList className="grid w-full grid-cols-2">
-        <TabsTrigger value="lsst">LSST</TabsTrigger>
-        <TabsTrigger value="ztf">ZTF</TabsTrigger>
+        <TabsTrigger value={LSST}>LSST</TabsTrigger>
+        <TabsTrigger value={ZTF}>ZTF</TabsTrigger>
       </TabsList>
-      <TabsContent value="lsst">
+      <TabsContent value={LSST}>
         <LsstRules />
       </TabsContent>
-      <TabsContent value="ztf">
+      <TabsContent value={ZTF}>
         <ZtfRules />
       </TabsContent>
     </Tabs>

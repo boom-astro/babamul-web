@@ -1,10 +1,14 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
+// Constants and types
 const { PI } = Math;
 const rad = PI / 180;
 
-export const SURVEYS = ["lsst", "ztf"] as const;
+export const ZTF = "ztf";
+export const LSST = "lsst";
+
+export const SURVEYS = [LSST, ZTF] as const;
 export type Survey = (typeof SURVEYS)[number];
 
 export const KAFKA_TOPICS = [
@@ -22,7 +26,7 @@ export const KAFKA_TOPICS = [
   "babamul.lsst.ztf-match.hostless",
   "babamul.lsst.no-ztf-match.unknown",
   "babamul.lsst.ztf-match.unknown",
-] as const;
+] as string[];
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
