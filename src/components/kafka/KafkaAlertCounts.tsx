@@ -1,38 +1,17 @@
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import type { TopicInfo } from "@/lib/api";
-import { KAFKA_TOPICS } from "@/lib/utils";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { KAFKA_TOPICS, SURVEYS } from "@/lib/utils";
 
-function surveyFromTopic(name: string): string {
-  if (name.startsWith("babamul.ztf")) return "ztf";
-  if (name.startsWith("babamul.lsst")) return "lsst";
-  return "other";
-}
-
-export default function KafkaAlertCounts({ topics, loading, error }: {
+export default function KafkaAlertCounts({ topics, loading, error, splitByMatch }: {
   topics: TopicInfo[];
   loading: boolean;
   error: string | null;
+  splitByMatch: boolean;
 }) {
-  const alertsByName = new Map(topics.map((t) => [t.name, t.n_alerts]));
-  const allTopics: TopicInfo[] = KAFKA_TOPICS.map((name) => ({
-    name,
-    n_alerts: alertsByName.get(name) ?? 0,
-  }));
-
-  const grouped = new Map<string, TopicInfo[]>();
-  for (const t of allTopics) {
-    const survey = surveyFromTopic(t.name);
-    const arr = grouped.get(survey) ?? [];
-    arr.push(t);
-    grouped.set(survey, arr);
-  }
-
   if (error) return <p className="text-sm text-destructive">{error}</p>;
 
   if (loading) return (
-    <>
-      {[1, 2].map((i) => <Card key={i} className="h-48 shimmer" />)}
-    </>
+    <>{[1, 2].map((i) => <Card key={i} className="h-48 shimmer"/>)}</>
   );
 
   if (!topics.length) return (
@@ -43,40 +22,60 @@ export default function KafkaAlertCounts({ topics, loading, error }: {
     </Card>
   );
 
+  const countByName = new Map(topics.map((t) => [t.name, t.n_alerts]));
+  const retentionDays = topics[0]?.retention_days;
+  const keyOf = (name: string) => {
+    if (splitByMatch) return name;
+    const [prefix, survey, , classification] = name.split(".");
+    return `${prefix}.${survey}.*.${classification}`;
+  };
+
   return (
     <>
-      {Array.from(grouped.entries()).map(([survey, surveyTopics]) => (
-        <Card key={survey}>
-          <CardHeader>
-            <CardTitle>{survey.toUpperCase()}</CardTitle>
-            <CardDescription>
-              {surveyTopics.length} topics — {surveyTopics.reduce((s, t) => s + t.n_alerts, 0).toLocaleString()} alerts
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {surveyTopics.map((t) => {
-              const surveyTotal = surveyTopics.reduce((s, st) => s + st.n_alerts, 0);
-              const pct = surveyTotal > 0 ? (t.n_alerts / surveyTotal) * 100 : 0;
-              return (
-                <div key={t.name} className="flex items-center gap-3">
-                  <code className="text-xs text-muted-foreground w-72 shrink-0 truncate" title={t.name}>
-                    {t.name}
-                  </code>
-                  <div className="flex-1 h-5 rounded bg-muted overflow-hidden">
-                    <div
-                      className={`h-full rounded transition-all`}
-                      style={{ width: `${pct}%`, backgroundColor: `var(--color-${survey})` }}
-                    />
+      {SURVEYS.map((survey) => {
+        const surveyTopics = KAFKA_TOPICS.filter((t) => t.split(".")[1] === survey);
+        const groups = new Map<string, number>();
+        for (const name of surveyTopics) {
+          const k = keyOf(name);
+          groups.set(k, (groups.get(k) ?? 0) + (countByName.get(name) ?? 0));
+        }
+        if (!groups.size) return null;
+        const rows = [...groups];
+        const total = rows.reduce((s, [, n]) => s + n, 0);
+
+        return (
+          <Card key={survey}>
+            <CardHeader>
+              <CardTitle>{survey.toUpperCase()}</CardTitle>
+              <CardDescription>
+                {surveyTopics.length} topics — {total.toLocaleString()} alerts
+                {retentionDays !== undefined && ` — ${retentionDays}-day retention`}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {rows.map(([name, n]) => {
+                const pct = total > 0 ? (n / total) * 100 : 0;
+                return (
+                  <div key={name} className="flex items-center gap-3">
+                    <code className="text-xs text-muted-foreground w-72 shrink-0 truncate" title={name}>
+                      {name}
+                    </code>
+                    <div className="flex-1 h-5 rounded bg-muted overflow-hidden">
+                      <div
+                        className="h-full rounded transition-all"
+                        style={{ width: `${pct}%`, backgroundColor: `var(--color-${survey})` }}
+                      />
+                    </div>
+                    <span className="text-xs tabular-nums w-20 text-right">
+                      {n.toLocaleString()}
+                    </span>
                   </div>
-                  <span className="text-xs tabular-nums w-20 text-right">
-                    {t.n_alerts.toLocaleString()}
-                  </span>
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
-      ))}
+                );
+              })}
+            </CardContent>
+          </Card>
+        );
+      })}
     </>
   );
 }

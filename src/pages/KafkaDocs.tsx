@@ -1,10 +1,12 @@
 import { useState, useEffect, Suspense } from "react";
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { fetchTopics, fetchSchema, type TopicInfo, type AvroSchema } from "@/lib/api";
 import { SURVEYS } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog.tsx";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import KafkaAlertCounts from "@/components/kafka/KafkaAlertCounts";
 import KafkaTopicRules from "@/components/kafka/KafkaTopicRules";
 import KafkaSchemas from "@/components/kafka/KafkaSchemas";
@@ -16,6 +18,7 @@ export default function KafkaDocs() {
   const [error, setError] = useState<string | null>(null);
   const [schemas, setSchemas] = useState<Record<string, AvroSchema>>({});
   const [showModal, setShowModal] = useState(false);
+  const [splitByMatch, setSplitByMatch] = useState(false);
 
   useEffect(() => {
     fetchTopics()
@@ -69,8 +72,20 @@ export default function KafkaDocs() {
       <h2 className="text-xl font-bold pt-4">Schemas</h2>
       <KafkaSchemas schemas={schemas} />
 
-      <h2 className="text-xl font-bold pt-4">Alert Counts</h2>
-      <KafkaAlertCounts topics={topics} loading={loading} error={error} />
+      <div className="flex items-center justify-between pt-4">
+        <h2 className="text-xl font-bold">Alert Counts</h2>
+        <div className="flex items-center gap-2">
+          <Switch
+            id="airplane-mode"
+            checked={splitByMatch}
+            onCheckedChange={(v) => setSplitByMatch(v)}
+          />
+          <Label htmlFor="split-by-match" className="text-sm font-normal cursor-pointer">
+            Split by match
+          </Label>
+        </div>
+      </div>
+      <KafkaAlertCounts topics={topics} loading={loading} error={error} splitByMatch={splitByMatch} />
 
       <h2 id="topics" className="text-xl font-bold pt-4">Topics</h2>
       <p className="text-sm text-muted-foreground">
