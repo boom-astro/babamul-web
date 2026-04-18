@@ -370,6 +370,7 @@ export async function fetchStats(startDate: string, endDate: string, survey?: st
 export type TopicInfo = {
   name: string;
   n_alerts: number;
+  retention_days: number;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
