@@ -273,11 +273,8 @@ export default function NightlyStats() {
                 )}
               </BarChart>
             </ChartContainer>
-            ) : (
-              <div className="flex h-87.5 w-full animate-pulse items-center justify-center rounded bg-muted">
-                <div className="h-87.5 animate-pulse rounded bg-muted"/>
-              </div>
-            )}
+            ) : <div className="h-87.5 w-full shimmer" />
+          }
         </CardContent>
       </Card>
 
