@@ -74,7 +74,7 @@ export default function KafkaSchemas({ schemas }: { schemas: Record<string, Avro
       <TabsContent value="compare">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           {SURVEYS.filter((s) => schemas[s]).map((survey) => (
-            <SchemaViewer survey={survey} schema={schemas[survey]} field_descriptions={FIELD_DESCRIPTIONS} copy_button={false}/>
+            <SchemaViewer key={survey} survey={survey} schema={schemas[survey]} field_descriptions={FIELD_DESCRIPTIONS} copy_button={false}/>
           ))}
         </div>
       </TabsContent>
