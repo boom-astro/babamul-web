@@ -76,7 +76,7 @@ export default function KafkaDocs() {
         <h2 className="text-xl font-bold">Alert Counts</h2>
         <div className="flex items-center gap-2">
           <Switch
-            id="airplane-mode"
+            id="split-by-match"
             checked={splitByMatch}
             onCheckedChange={(v) => setSplitByMatch(v)}
           />
