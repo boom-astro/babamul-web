@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Bar, BarChart, CartesianGrid, ReferenceArea, XAxis, YAxis } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { Toggle } from "@/components/ui/toggle";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { IconZoomReset } from "@tabler/icons-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import api, { CatalogEntry, NightlyStat } from "@/lib/api";
 import { SURVEYS, type Survey } from "@/lib/utils";
@@ -181,11 +183,6 @@ export default function Dashboard() {
                 ({chartData.length} nights{zoomSlice ? " — zoomed" : ""})
               </CardDescription>
             </div>
-            {zoomSlice && (
-              <Toggle onPressedChange={resetZoom} className="text-xs text-muted-foreground hover:text-foreground underline">
-                Reset zoom
-              </Toggle>
-            )}
             <div className="flex flex-wrap items-center gap-6">
               <div className="flex flex-wrap items-center gap-3">
                 <Toggle variant="outline" size="sm" pressed={surveys.has("ztf")}
@@ -216,7 +213,21 @@ export default function Dashboard() {
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
         </CardHeader>
-        <CardContent>
+        <CardContent className="relative">
+          {zoomSlice && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Toggle
+                  onPressedChange={resetZoom}
+                  className="absolute top-0 right-8 z-1"
+                  aria-label="Reset zoom"
+                >
+                  <IconZoomReset className="w-4 h-4" />
+                </Toggle>
+              </TooltipTrigger>
+              <TooltipContent side="left">Reset zoom</TooltipContent>
+            </Tooltip>
+          )}
           {!loading ? (
             <ChartContainer config={chartConfig} className="h-87.5 w-full">
               <BarChart
