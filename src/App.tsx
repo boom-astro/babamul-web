@@ -22,7 +22,7 @@ const ForgotPassword = lazy(() => import("@/pages/ForgotPassword"))
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"))
 const Help = lazy(() => import("@/pages/Help"))
 const Acknowledgments = lazy(() => import("@/pages/Acknowledgments"))
-const NightlyStats = lazy(() => import("@/pages/NightlyStats"))
+const Dashboard = lazy(() => import("@/pages/Dashboard"))
 
 // Release mode flag - set VITE_PRERELEASE_MODE=true at build time to restrict app to landing page only
 const PRERELEASE_MODE = import.meta.env.VITE_PRERELEASE_MODE === 'true';
@@ -104,7 +104,7 @@ function LayoutRoutes() {
                   {!PRERELEASE_MODE && <Route path="/activate" element={<SignupPage />} />}
                   <Route path="/query" element={<ProtectedRoute><Query /></ProtectedRoute>} />
                   <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-                  <Route path="/stats" element={<NightlyStats />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/docs/kafka" element={<KafkaDocs />} />
                   <Route path="/docs/kafka/access-guide" element={<KafkaAccessGuide />} />
                   <Route path="/docs/api" element={<ApiDocs />} />

@@ -26,7 +26,7 @@ function formatBytes(bytes: number | undefined): string {
   return `${val < 10 ? val.toFixed(1) : Math.round(val)} ${units[i]}`;
 }
 
-export default function NightlyStats() {
+export default function Dashboard() {
   const defaultEnd = new Date();
   const defaultStart = new Date();
   defaultStart.setMonth(defaultStart.getMonth() - 2);
