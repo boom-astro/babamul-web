@@ -307,7 +307,7 @@ export default function Dashboard() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Alert Counts</CardTitle>
+          <CardTitle>Alert Counts by Kafka Topic</CardTitle>
           <CardDescription>
             <div className="flex justify-between items-center">
               <div>
