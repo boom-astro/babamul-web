@@ -7,8 +7,11 @@ import { Toggle } from "@/components/ui/toggle";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { IconZoomReset } from "@tabler/icons-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import api, { CatalogEntry, NightlyStat } from "@/lib/api";
+import api, { CatalogEntry, fetchTopics, NightlyStat, type TopicInfo } from "@/lib/api";
 import { SURVEYS, type Survey } from "@/lib/utils";
+import { Switch } from "@/components/ui/switch.tsx";
+import { Label } from "@/components/ui/label.tsx";
+import KafkaAlertCounts from "@/components/kafka/KafkaAlertCounts.tsx";
 
 const chartConfig = {
   ztf: { label: "ZTF" },
@@ -41,6 +44,12 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Kafka topics state
+  const [topics, setTopics] = useState<TopicInfo[]>([]);
+  const [splitByMatch, setSplitByMatch] = useState(false);
+  const [topicsLoading, setTopicsLoading] = useState(true);
+  const [topicsError, setTopicsError] = useState<string | null>(null);
+
   // Zoom: drag-select on chart to zoom, double-click to reset
   const [zoomLeft, setZoomLeft] = useState<string | null>(null);
   const [zoomRight, setZoomRight] = useState<string | null>(null);
@@ -72,6 +81,13 @@ export default function Dashboard() {
     api.fetchCatalogStats()
       .then((s) => setCatalogs(s.catalogs.sort((a, b) => a.name.localeCompare(b.name))))
       .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetchTopics()
+      .then(setTopics)
+      .catch((e) => setTopicsError(e instanceof Error ? e.message : "Failed to fetch topics"))
+      .finally(() => setTopicsLoading(false));
   }, []);
 
   const visibleData = useMemo(() => {
@@ -289,34 +305,58 @@ export default function Dashboard() {
         </CardContent>
       </Card>
 
-      {catalogs.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Catalogs</CardTitle>
-            <CardDescription>{catalogs.length} catalogs available</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead className="text-right">Size</TableHead>
-                  <TableHead className="text-right">Entries</TableHead>
+      <Card>
+        <CardHeader>
+          <CardTitle>Alert Counts</CardTitle>
+          <CardDescription>
+            <div className="flex justify-between items-center">
+              <div>
+                More information about the topics on the <a href="/docs/kafka" className="underline">Kafka documentation page</a>.
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="split-by-match"
+                  checked={splitByMatch}
+                  onCheckedChange={(v) => setSplitByMatch(v)}
+                />
+                <Label htmlFor="split-by-match" className="text-sm font-normal cursor-pointer">
+                  Split by match
+                </Label>
+              </div>
+            </div>
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          <KafkaAlertCounts topics={topics} loading={topicsLoading} error={topicsError} splitByMatch={splitByMatch} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Catalogs</CardTitle>
+          <CardDescription>{catalogs.length} catalogs available</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead className="text-right">Size</TableHead>
+                <TableHead className="text-right">Entries</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {catalogs.map((c) => (
+                <TableRow key={c.name}>
+                  <TableCell className="font-mono text-sm">{c.name}</TableCell>
+                  <TableCell className="text-right tabular-nums">{formatBytes(c?.size_bytes)}</TableCell>
+                  <TableCell className="text-right tabular-nums">{c?.count?.toLocaleString() || ""}</TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {catalogs.map((c) => (
-                  <TableRow key={c.name}>
-                    <TableCell className="font-mono text-sm">{c.name}</TableCell>
-                    <TableCell className="text-right tabular-nums">{formatBytes(c?.size_bytes)}</TableCell>
-                    <TableCell className="text-right tabular-nums">{c?.count?.toLocaleString() || ""}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      )}
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }
