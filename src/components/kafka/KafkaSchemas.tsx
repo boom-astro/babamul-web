@@ -6,20 +6,19 @@ import { SURVEYS, ZTF, type Survey } from "@/lib/utils";
 import { SchemaViewer } from "@/components/SchemaViewer";
 
 const getFieldDescriptions = (survey: Survey): Record<string, ReactNode> => ({
-  rock: (
-    <>
-      <code className="text-chart-2">True</code> if the alert has an <code>ss_object_id</code> (Solar System object
-      identifier)
-    </>
-  ),
   stationary: (
     <>
       <code className="text-chart-2">True</code> if the temporal baseline (last &minus; first
       observation) &gt; 0.01&nbsp;days (~14&nbsp;min).
-      Combines <code>prv_candidates</code> and <code>fp_hists</code> (forced photometry, SNR &gt; 3).
+      Combines <code>prv_candidates</code> and <code>fp_hists</code> (forced photometry, SNR &ge; 3).
     </>
   ),
   ...survey === ZTF ? {
+    rock: (
+      <>
+        <code className="text-chart-2">True</code> if a known Solar System object is within 12&nbsp;arcsec (<code>ssdistnr</code>) with a valid <code>ssmagnr</code>.
+      </>
+    ),
     star: (
       <>
         Stellar classification from PS1 star-galaxy scores (<code>sgscore1</code>, <code>distpsnr1</code>):
@@ -36,6 +35,11 @@ const getFieldDescriptions = (survey: Survey): Record<string, ReactNode> => ({
       </>
     ),
   } : {
+    rock: (
+      <>
+        <code className="text-chart-2">True</code> if the alert has an <code>ss_object_id</code> (Solar System object identifier).
+      </>
+    ),
     star: (
       <>
         Cross-match with the LSPSC catalog:
