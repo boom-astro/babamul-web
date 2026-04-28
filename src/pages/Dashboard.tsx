@@ -138,7 +138,7 @@ export default function Dashboard() {
   return (
     <div className="px-4 lg:px-6 space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Statistics</h1>
+        <h1 className="text-2xl font-bold">Dashboard</h1>
       </div>
       {visibleData.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
