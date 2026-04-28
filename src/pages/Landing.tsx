@@ -2,7 +2,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import api from '@/lib/api';
 import Kilonova from '@/components/Kilonova';
-import { IconNews, IconBrandPython, IconChartBar } from '@tabler/icons-react';
+import { IconNews, IconBrandPython, IconChartBar, IconSearch } from '@tabler/icons-react';
 import { useEffect } from 'react';
 import { ACKNOWLEDGMENTS_TEXT, PAPER_URL } from '@/lib/constants';
 // Release mode flag - set VITE_PRERELEASE_MODE=true at build time to restrict app to landing page only
@@ -70,9 +70,12 @@ export default function Landing() {
 
           <div className="grid grid-cols-2 md:flex md:flex-row items-center justify-center gap-3 md:gap-4 fade-in-up">
             <Link to="/query" className="col-span-2 md:col-span-1">
-              <Button className="w-full px-6 py-3 bg-white/90 hover:bg-white text-slate-900 shadow-md hover:shadow-xl transform transition duration-150 ease-out hover:-translate-y-0.5">Search for alerts</Button>
+              <Button className="w-full px-6 py-3 bg-white/90 hover:bg-white text-slate-900 shadow-md hover:shadow-xl transform transition duration-150 ease-out hover:-translate-y-0.5 flex items-center justify-center gap-2">
+                <IconSearch className="w-4 h-4" />
+                Search for alerts
+              </Button>
             </Link>
-            <Link to="/stats" className="col-span-1">
+            <Link to="/dashboard" className="col-span-1">
               <Button className="w-full px-6 py-3 bg-white/90 hover:bg-white text-slate-900 shadow-md hover:shadow-xl transform transition duration-150 ease-out hover:-translate-y-0.5 flex items-center justify-center gap-2">
                 <IconChartBar className="w-4 h-4" />
                 Dashboard
