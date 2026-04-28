@@ -149,8 +149,13 @@ function ZtfRules() {
           <ul className="text-sm list-disc pl-5">
             <li>fallback: not <code>stellar</code> and no valid <code>sgscoreN</code> in the hosted range</li>
           </ul>
+        </div>
+
+        <hr className="border-border" />
+
+        <div>
           <p className="text-xs text-muted-foreground mt-1">
-            ZTF has no footprint MOC check, so there is no <em>unknown</em> category.
+            ZTF alerts already include PS1 cross-match values, which cover the full ZTF survey area. There is no <em>unknown</em> category.
           </p>
         </div>
       </CardContent>
