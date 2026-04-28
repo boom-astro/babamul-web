@@ -480,10 +480,10 @@ const AlertCard = memo(function AlertCard({ alert, survey }: { alert: Alert; sur
         </div>
         {drb !== null && (
           <div>
-            <span className="text-muted-foreground">DRB/Reliability:</span> <span className="font-mono">{drb.toFixed(3)}</span>
+            <span className="text-muted-foreground">DRB/Reliability:</span> <span className="font-mono">{typeof drb === 'number' ? drb.toFixed(3) : drb}</span>
           </div>
         )}
-        {alert.candidate.magpsf !== undefined && (
+        {alert.candidate.magpsf !== undefined && typeof alert.candidate.magpsf === 'number' && (
           <div>
             <span className="text-muted-foreground">Magnitude:</span> <span className="font-mono">{alert.candidate.magpsf.toFixed(2)}</span>
           </div>
