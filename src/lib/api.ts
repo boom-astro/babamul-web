@@ -399,26 +399,26 @@ export async function fetchTopics(): Promise<TopicInfo[]> {
   return Array.isArray(result) ? (result as TopicInfo[]) : [];
 }
 
-export type CatalogEntry = {
+export type CollectionEntry = {
   name: string;
   count?: number;
   size_bytes?: number;
 };
 
-export type CatalogStats = {
-  n_catalogs: number;
-  catalogs: CatalogEntry[];
+export type CollectionStats = {
+  n_collections: number;
+  collections: CollectionEntry[];
 };
 
-export async function fetchCatalogStats(): Promise<CatalogStats> {
-  const url = `${API_BASE}/stats/catalogs?count=true&size=true`;
+export async function fetchCollectionStats(): Promise<CollectionStats> {
+  const url = `${API_BASE}/stats/collections?count=true&size=true`;
   const res = await fetch(url);
   if (!res.ok) {
     const txt = await res.text().catch(() => "");
-    throw new Error(`Fetch catalog stats failed: ${res.status} ${txt}`);
+    throw new Error(`Fetch collection stats failed: ${res.status} ${txt}`);
   }
   const body = await parseResponseJson(res).catch(() => ({}));
-  return unwrapData<CatalogStats>(body, { n_catalogs: 0, catalogs: [] });
+  return unwrapData<CollectionStats>(body, { n_collections: 0, collections: [] });
 }
 
 export type SearchResult = {
@@ -481,5 +481,5 @@ export default {
   fetchAlertCutouts,
   fetchObjCutouts,
   fetchStats,
-  fetchCatalogStats,
+  fetchCollectionStats,
 };

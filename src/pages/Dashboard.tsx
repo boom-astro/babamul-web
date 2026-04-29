@@ -7,7 +7,7 @@ import { Toggle } from "@/components/ui/toggle";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { IconZoomReset } from "@tabler/icons-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import api, { CatalogEntry, fetchTopics, NightlyStat, type TopicInfo } from "@/lib/api";
+import api, { CollectionEntry, fetchTopics, NightlyStat, type TopicInfo } from "@/lib/api";
 import { SURVEYS, type Survey } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch.tsx";
 import { Label } from "@/components/ui/label.tsx";
@@ -46,7 +46,7 @@ export default function Dashboard() {
   const [startDate, setStartDate] = useState(formatDate(defaultStart));
   const [endDate, setEndDate] = useState(formatDate(defaultEnd));
   const [statsData, setStatsData] = useState<NightlyStat[]>([]);
-  const [catalogs, setCatalogs] = useState<CatalogEntry[]>([]);
+  const [collections, setCollections] = useState<CollectionEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -84,8 +84,8 @@ export default function Dashboard() {
   }, [loadStats]);
 
   useEffect(() => {
-    api.fetchCatalogStats()
-      .then((s) => setCatalogs(s.catalogs.sort((a, b) => a.name.localeCompare(b.name))))
+    api.fetchCollectionStats()
+      .then((s) => setCollections(s.collections.sort((a, b) => a.name.localeCompare(b.name))))
       .catch(() => {});
   }, []);
 
@@ -351,8 +351,8 @@ export default function Dashboard() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Cross-match Catalogs</CardTitle>
-          <CardDescription>{catalogs.length} catalogs available</CardDescription>
+          <CardTitle>Collections</CardTitle>
+          <CardDescription>{collections.length} collections available</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -364,7 +364,7 @@ export default function Dashboard() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {catalogs.map((c) => (
+              {collections.map((c) => (
                 <TableRow key={c.name}>
                   <TableCell className="font-mono text-sm">{c.name}</TableCell>
                   <TableCell className="text-right tabular-nums">{formatBytes(c?.size_bytes)}</TableCell>
