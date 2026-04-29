@@ -37,6 +37,7 @@ function formatBytes(bytes: number | undefined): string {
 }
 
 export default function Dashboard() {
+  const todayUTC = formatDate(new Date());
   const defaultEnd = new Date();
   const defaultStart = new Date();
   defaultStart.setMonth(defaultStart.getMonth() - 2);
@@ -227,6 +228,8 @@ export default function Dashboard() {
                 <Input
                   type="date"
                   value={startDate}
+                  min="2018-01-01"
+                  max={todayUTC}
                   onChange={(e) => setStartDate(e.target.value)}
                   className="w-37 h-8 text-xs"
                 />
@@ -234,6 +237,8 @@ export default function Dashboard() {
                 <Input
                   type="date"
                   value={endDate}
+                  min="2018-01-01"
+                  max={todayUTC}
                   onChange={(e) => setEndDate(e.target.value)}
                   className="w-37 h-8 text-xs"
                 />
@@ -258,7 +263,7 @@ export default function Dashboard() {
             </Tooltip>
           )}
           {!loading ? (
-            <ChartContainer config={chartConfig} className="h-87.5 w-full">
+            <ChartContainer config={chartConfig} className="h-87.5 w-full select-none">
               <BarChart
                 data={chartData}
                 margin={{top: 4, right: 4, bottom: 0, left: 4}}
