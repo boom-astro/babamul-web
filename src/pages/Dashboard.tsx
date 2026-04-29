@@ -13,9 +13,14 @@ import { Switch } from "@/components/ui/switch.tsx";
 import { Label } from "@/components/ui/label.tsx";
 import KafkaAlertCounts from "@/components/kafka/KafkaAlertCounts.tsx";
 
+const SURVEY_COLORS: Record<string, string> = {
+  ztf: "var(--chart-1)",
+  lsst: "var(--chart-2)",
+};
+
 const chartConfig = {
-  ztf: { label: "ZTF" },
-  lsst: { label: "LSST" },
+  ztf: { label: "ZTF", color: SURVEY_COLORS.ztf },
+  lsst: { label: "LSST", color: SURVEY_COLORS.lsst },
 } satisfies ChartConfig;
 
 function formatDate(d: Date): string {
@@ -201,14 +206,22 @@ export default function Dashboard() {
             </div>
             <div className="flex flex-wrap items-center gap-6">
               <div className="flex flex-wrap items-center gap-3">
-                <Toggle variant="outline" size="sm" pressed={surveys.has("ztf")}
-                        onPressedChange={() => toggleSurvey("ztf")}>
-                  ZTF
-                </Toggle>
-                <Toggle variant="outline" size="sm" pressed={surveys.has("lsst")}
-                        onPressedChange={() => toggleSurvey("lsst")}>
-                  LSST
-                </Toggle>
+                {(["ztf", "lsst"] as const).map((s) => (
+                  <Toggle
+                    key={s}
+                    variant="outline"
+                    size="sm"
+                    pressed={surveys.has(s)}
+                    onPressedChange={() => toggleSurvey(s)}
+                    style={surveys.has(s) ? {
+                      borderColor: SURVEY_COLORS[s],
+                      color: SURVEY_COLORS[s],
+                      backgroundColor: `color-mix(in oklch, ${SURVEY_COLORS[s]} 15%, transparent)`,
+                    } : {}}
+                  >
+                    {s.toUpperCase()}
+                  </Toggle>
+                ))}
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <Input
