@@ -2,6 +2,11 @@ import type { TopicInfo } from "@/lib/api";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { KAFKA_TOPICS, SURVEYS } from "@/lib/utils";
 
+const NO_MATCH_COLOR = "var(--chart-4)";
+const MATCH_COLOR = "var(--chart-3)";
+
+const isMatchTopic = (name: string) => !name.split(".")[2].startsWith("no-");
+
 export default function KafkaAlertCounts({ topics, loading, error, splitByMatch }: {
   topics: TopicInfo[];
   loading: boolean;
@@ -34,14 +39,21 @@ export default function KafkaAlertCounts({ topics, loading, error, splitByMatch 
     <>
       {SURVEYS.map((survey) => {
         const surveyTopics = KAFKA_TOPICS.filter((t) => t.split(".")[1] === survey);
-        const groups = new Map<string, number>();
+        const groups = new Map<string, { matched: number; noMatch: number }>();
         for (const name of surveyTopics) {
           const k = keyOf(name);
-          groups.set(k, (groups.get(k) ?? 0) + (countByName.get(name) ?? 0));
+          const count = countByName.get(name) ?? 0;
+          const prev = groups.get(k) ?? { matched: 0, noMatch: 0 };
+          if (isMatchTopic(name)) {
+            groups.set(k, { matched: prev.matched + count, noMatch: prev.noMatch });
+          } else {
+            groups.set(k, { matched: prev.matched, noMatch: prev.noMatch + count });
+          }
         }
+
         if (!groups.size) return null;
         const rows = [...groups];
-        const total = rows.reduce((s, [, n]) => s + n, 0);
+        const total = rows.reduce((s, [, { matched, noMatch }]) => s + matched + noMatch, 0);
 
         return (
           <Card key={survey}>
@@ -52,19 +64,42 @@ export default function KafkaAlertCounts({ topics, loading, error, splitByMatch 
                 {retentionDays !== undefined && ` — ${retentionDays}-day retention`}
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-2">
-              {rows.map(([name, n]) => {
+            <CardContent className="space-y-3">
+              {rows.map(([name, { matched, noMatch }]) => {
+                const n = matched + noMatch;
                 const pct = total > 0 ? (n / total) * 100 : 0;
                 return (
                   <div key={name} className="flex items-center gap-3">
-                    <code className="text-xs text-muted-foreground w-72 shrink-0 truncate" title={name}>
+                    <code className="text-xs text-muted-foreground w-64 shrink-0 truncate" title={name}>
                       {name}
                     </code>
                     <div className="flex-1 h-5 rounded bg-muted overflow-hidden">
-                      <div
-                        className="h-full rounded transition-all"
-                        style={{ width: `${pct}%`, backgroundColor: `var(--color-${survey})` }}
-                      />
+                      <div className="h-full flex" style={{ width: `${pct}%` }}>
+                        {splitByMatch ? (
+                          <div className="h-full w-full" style={{ backgroundColor: isMatchTopic(name) ? MATCH_COLOR : NO_MATCH_COLOR }} />
+                        ) : (
+                          <>
+                            {noMatch > 0 && (
+                              <div
+                                className="h-full"
+                                style={{
+                                  width: `${(noMatch / n) * 100}%`,
+                                  backgroundColor: NO_MATCH_COLOR,
+                                }}
+                              />
+                            )}
+                            {matched > 0 && (
+                              <div
+                                className="h-full"
+                                style={{
+                                  width: `${(matched / n) * 100}%`,
+                                  backgroundColor: MATCH_COLOR,
+                                }}
+                              />
+                            )}
+                          </>
+                        )}
+                      </div>
                     </div>
                     <span className="text-xs tabular-nums w-20 text-right">
                       {n.toLocaleString()}
