@@ -159,6 +159,21 @@ export default function Dashboard() {
       }, null),
     [visibleData]);
 
+  const isAlertCollection = (name: string) =>
+    name.startsWith("ZTF_") || name.startsWith("LSST_");
+
+  const ALERT_TYPE_LABELS: Record<string, string> = {
+    alerts: "alerts",
+    alerts_aux: "objects",
+    alerts_cutouts: "alert cutouts",
+  };
+
+  function parseAlertCollection(name: string): { survey: string; type: string } {
+    const m = name.match(/^(ZTF|LSST)_(.+)$/);
+    if (!m) return { survey: "", type: name };
+    return { survey: m[1], type: ALERT_TYPE_LABELS[m[2]] ?? m[2] };
+  }
+
   return (
     <div className="px-4 lg:px-6 space-y-4">
       <div className="flex items-center justify-between">
@@ -351,8 +366,8 @@ export default function Dashboard() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Collections</CardTitle>
-          <CardDescription>{collections.length} collections available</CardDescription>
+          <CardTitle>Catalogs</CardTitle>
+          <CardDescription>{collections.length} catalogs available</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -364,13 +379,43 @@ export default function Dashboard() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {collections.map((c) => (
+              {collections.filter(c => !isAlertCollection(c.name)).map((c) => (
                 <TableRow key={c.name}>
                   <TableCell className="font-mono text-sm">{c.name}</TableCell>
-                  <TableCell className="text-right tabular-nums">{formatBytes(c?.size_bytes)}</TableCell>
+                  <TableCell className="text-right tabular-nums">{formatBytes(c?.size_bytes) || "-"}</TableCell>
                   <TableCell className="text-right tabular-nums">{c?.count?.toLocaleString() || ""}</TableCell>
                 </TableRow>
               ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Alert Collections</CardTitle>
+          <CardDescription>ZTF and LSST collections</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead className="text-right">Size</TableHead>
+                <TableHead className="text-right">Entries</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {collections.filter(c => isAlertCollection(c.name)).map((c) => {
+                const { survey, type } = parseAlertCollection(c.name);
+                return (
+                  <TableRow key={c.name}>
+                    <TableCell className="text-sm">{survey} {type}</TableCell>
+                    <TableCell className="text-right tabular-nums">{formatBytes(c?.size_bytes) || "-"}</TableCell>
+                    <TableCell className="text-right tabular-nums">{c?.count?.toLocaleString()}</TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </CardContent>
