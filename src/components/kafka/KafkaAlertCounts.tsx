@@ -1,5 +1,6 @@
 import type { TopicInfo } from "@/lib/api";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { KAFKA_TOPICS, SURVEYS } from "@/lib/utils";
 
 const NO_MATCH_COLOR = "var(--chart-4)";
@@ -55,14 +56,32 @@ export default function KafkaAlertCounts({ topics, loading, error, splitByMatch 
         const rows = [...groups];
         const total = rows.reduce((s, [, { matched, noMatch }]) => s + matched + noMatch, 0);
 
+        const crossSurvey = survey === "ztf" ? "LSST" : "ZTF";
+
         return (
           <Card key={survey}>
             <CardHeader>
-              <CardTitle>{survey.toUpperCase()}</CardTitle>
-              <CardDescription>
-                {surveyTopics.length} topics — {total.toLocaleString()} alerts
-                {retentionDays !== undefined && ` — ${retentionDays}-day retention`}
-              </CardDescription>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <CardTitle>{survey.toUpperCase()}</CardTitle>
+                  <CardDescription>
+                    {surveyTopics.length} topics — {total.toLocaleString()} alerts
+                    {retentionDays !== undefined && ` — ${retentionDays}-day retention`}
+                  </CardDescription>
+                </div>
+                {!splitByMatch && (
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground shrink-0 pt-0.5">
+                    <span className="flex items-center gap-1.5">
+                      <span className="inline-block w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: NO_MATCH_COLOR }} />
+                      No {crossSurvey} match
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="inline-block w-3 h-3 rounded-sm shrink-0" style={{ backgroundColor: MATCH_COLOR }} />
+                      With {crossSurvey} match
+                    </span>
+                  </div>
+                )}
+              </div>
             </CardHeader>
             <CardContent className="space-y-3">
               {rows.map(([name, { matched, noMatch }]) => {
@@ -80,22 +99,36 @@ export default function KafkaAlertCounts({ topics, loading, error, splitByMatch 
                         ) : (
                           <>
                             {noMatch > 0 && (
-                              <div
-                                className="h-full"
-                                style={{
-                                  width: `${(noMatch / n) * 100}%`,
-                                  backgroundColor: NO_MATCH_COLOR,
-                                }}
-                              />
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div
+                                    className="h-full"
+                                    style={{
+                                      width: `${(noMatch / n) * 100}%`,
+                                      backgroundColor: NO_MATCH_COLOR,
+                                    }}
+                                  />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  Without {crossSurvey} matches: {noMatch.toLocaleString()} ({((noMatch / n) * 100).toFixed(1)}%)
+                                </TooltipContent>
+                              </Tooltip>
                             )}
                             {matched > 0 && (
-                              <div
-                                className="h-full"
-                                style={{
-                                  width: `${(matched / n) * 100}%`,
-                                  backgroundColor: MATCH_COLOR,
-                                }}
-                              />
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div
+                                    className="h-full"
+                                    style={{
+                                      width: `${(matched / n) * 100}%`,
+                                      backgroundColor: MATCH_COLOR,
+                                    }}
+                                  />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  With {crossSurvey} matches: {matched.toLocaleString()} ({((matched / n) * 100).toFixed(1)}%)
+                                </TooltipContent>
+                              </Tooltip>
                             )}
                           </>
                         )}

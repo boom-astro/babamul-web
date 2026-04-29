@@ -351,7 +351,7 @@ export default function Dashboard() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Catalogs</CardTitle>
+          <CardTitle>Cross-match Catalogs</CardTitle>
           <CardDescription>{catalogs.length} catalogs available</CardDescription>
         </CardHeader>
         <CardContent>
