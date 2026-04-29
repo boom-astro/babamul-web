@@ -62,7 +62,7 @@ export default function KafkaDocs() {
     <div className="px-4 lg:px-6 space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Kafka Documentation</h1>
-        <Button variant="outline" size="sm" asChild>
+        <Button variant="outline" size="lg" asChild>
           <Link to="/docs/kafka/access-guide">
             Access guide <ArrowRight className="ml-1 h-4 w-4" />
           </Link>
@@ -89,7 +89,7 @@ export default function KafkaDocs() {
 
       <h2 id="topics" className="text-xl font-bold pt-4">Topics</h2>
       <p className="text-sm text-muted-foreground">
-        Each alert is routed to a topic based on the following filtering rules. Alerts that match the <span className="text-destructive">excluded</span> criteria are dropped.{" "}
+        Each alert is routed to a topic based on the following filtering rules (in order). Alerts that match the <span className="text-destructive">excluded</span> criteria are not sent to Kafka.{" "}
         <button onClick={() => setShowModal(true)} className="text-primary hover:underline cursor-pointer">
           Learn more about how objects will appear in topics
         </button>

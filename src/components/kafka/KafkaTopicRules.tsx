@@ -22,7 +22,7 @@ function LsstRules() {
 
         <div>
           <h3 className="font-semibold text-chart-1">stellar</h3>
-          <p className="text-xs text-muted-foreground mb-0.5">At least one LSPSC cross-match satisfies:</p>
+          <p className="text-sm text-muted-foreground mb-0.5">At least one LSPSC cross-match satisfies:</p>
           <ul className="text-sm list-disc pl-5">
             <li><code>match.distance &le; 1.0&Prime; <AND/> match.score &gt; 0.5</code></li>
             <OR/>
@@ -62,6 +62,17 @@ function LsstRules() {
             <div className="text-muted-foreground">AND</div>
             <li><code>(ra, dec)</code> falls outside the LSPSC MOC (HEALPix depth&nbsp;11)</li>
           </ul>
+        </div>
+
+        <hr className="border-border" />
+
+        <div>
+          <p className="text-sm text-muted-foreground mt-1">
+            1. Unlike ZTF, LSST alerts do not come with a pre-defined star-galaxy score catalog match. Instead, we cross-match each LSST object with the Legacy Survey Point Source Catalog (LSPSC; Liu et al. 2025), with a radius of 30&Prime; and keep the 3 closest matches.
+          </p>
+          <p className="text-sm text-muted-foreground mt-1">
+            2. Legacy Survey's footprint is not a 1-to-1 match with LSST's. LSST objects outside of the LS footprint are assigned to the <code>unknown</code> topic, while objects inside the footprint but with no matches are assigned to the <code>hostless</code> topic.
+          </p>
         </div>
       </CardContent>
     </Card>
@@ -137,9 +148,6 @@ function ZtfRules() {
               at least one of <code>sgscore1, sgscore2, sgscore3 satisfies 0.0 &le; score &le; 0.5</code>
             </li>
           </ul>
-          <p className="text-xs text-muted-foreground mt-1">
-            Negative values (e.g. &minus;999) are ZTF pipeline placeholders and are ignored.
-          </p>
         </div>
 
         <hr className="border-border" />
@@ -147,15 +155,24 @@ function ZtfRules() {
         <div>
           <h3 className="mb-1 font-semibold text-chart-4">hostless</h3>
           <ul className="text-sm list-disc pl-5">
-            <li>fallback: not <code>stellar</code> and no valid <code>sgscoreN</code> in the hosted range</li>
+            <li>fallback: not <code>stellar</code> and no valid <code>sgscoreN*</code> in the hosted range</li>
           </ul>
         </div>
 
         <hr className="border-border" />
 
         <div>
-          <p className="text-xs text-muted-foreground mt-1">
-            ZTF alerts already include PS1 cross-match values, which cover the full ZTF survey area. There is no <em>unknown</em> category.
+          <p className="text-sm text-muted-foreground mt-2">
+            1. SGscoreN is a star-galaxy score based on the Nth closest Pan-STARRS match up to 30&Prime; (and up to the 3 closest matches).
+          </p>
+          <p className="text-sm text-muted-foreground mt-1">
+            2. An SGscoreN value close to 1 indicates a likely star, while a value close to 0 indicates a likely galaxy.
+          </p>
+          <p className="text-sm text-muted-foreground mt-1">
+            3. Negative values (e.g. &minus;999) are ZTF pipeline placeholders and are ignored.
+          </p>
+          <p className="text-sm text-muted-foreground mt-1">
+            4. Pan-STARRS' footprint matches ZTF's public survey area, so there is no <em>unknown</em> category. A ZTF with no sgscore matches always corresponds to <code>hostless</code>).
           </p>
         </div>
       </CardContent>
