@@ -513,12 +513,13 @@ export async function fetchFilterTest(params: FilterTestParams): Promise<Record<
     throw new Error(`Filter test failed: ${res.status} ${txt}`);
   }
   const body = await parseResponseJson(res).catch(() => ({}));
-  const result = unwrapData<unknown>(body, []);
-  return Array.isArray(result) ? (result as Record<string, unknown>[]) : [];
+  const result = unwrapData<{ results?: unknown[] }>(body, { results: [] });
+  const resultsArray = result && result.results;
+  return Array.isArray(resultsArray) ? (resultsArray as Record<string, unknown>[]) : [];
 }
 
 export async function fetchBoomSchema(survey: string): Promise<AvroSchema> {
-  const url = `${BOOM_API_BASE}/surveys/${encodeURIComponent(survey)}/schemas`;
+  const url = `${BOOM_API_BASE}/babamul/surveys/${encodeURIComponent(survey).toLowerCase()}/schemas`;
   const res = await fetch(url);
   if (!res.ok) {
     const txt = await res.text().catch(() => "");
