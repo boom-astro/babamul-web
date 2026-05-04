@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,9 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SchemaViewer } from "@/components/SchemaViewer";
+import { FilterBuilder } from "@/components/filter/FilterBuilder";
 import { fetchFilterTestCount, fetchFilterTest, fetchBoomSchema, type FilterTestParams, type FilterTestCountResult, type AvroSchema } from "@/lib/api";
+import { ZTF_FALLBACK_SCHEMA } from "@/lib/ztfFallbackSchema";
 
 const DEFAULT_PIPELINE = `[
   {
@@ -92,9 +94,14 @@ export default function Filters() {
   const [activeTab, setActiveTab] = useState<"editor" | "results">("editor");
   const [survey, setSurvey] = useState<"ZTF" | "LSST">("ZTF");
   const [pipelineText, setPipelineText] = useState(DEFAULT_PIPELINE);
-  const [startJd, setStartJd] = useState("2461404.5");
-  const [endJd, setEndJd] = useState("2461406.5");
+  const [startJd, setStartJd] = useState("2461138.5");
+  const [endJd, setEndJd] = useState("2461140.5");
   const [limit, setLimit] = useState("10");
+
+  // Stable callback for FilterBuilder
+  const handlePipelineTextChange = useCallback((text: string) => {
+    setPipelineText(text);
+  }, []);
 
   // Schema state
   const [schema, setSchema] = useState<AvroSchema | null>(null);
@@ -107,13 +114,18 @@ export default function Filters() {
   const [countLoading, setCountLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Load schema on mount and survey change
+  // Load schema on mount and survey change (falls back to hardcoded schema)
   useEffect(() => {
     let cancelled = false;
     setSchemaLoading(true);
     fetchBoomSchema(survey)
       .then((s) => { if (!cancelled) setSchema(s); })
-      .catch((err) => { if (!cancelled) console.error("Schema load failed:", err); })
+      .catch(() => {
+        if (!cancelled) {
+          console.warn("Schema API unreachable, using fallback ZTF schema");
+          if (survey === "ZTF") setSchema(ZTF_FALLBACK_SCHEMA as AvroSchema);
+        }
+      })
       .finally(() => { if (!cancelled) setSchemaLoading(false); });
     return () => { cancelled = true; };
   }, [survey]);
@@ -198,7 +210,7 @@ export default function Filters() {
                   </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="editor">
+                <TabsContent value="editor" forceMount className={activeTab !== "editor" ? "hidden" : undefined}>
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                       <div className="sm:col-span-4">
@@ -215,21 +227,13 @@ export default function Filters() {
                       </div>
                     </div>
 
-                    <div>
-                      <Label className="text-xs font-medium mb-1 block text-muted-foreground">
-                        Pipeline (MongoDB Aggregation JSON)
-                      </Label>
-                      <textarea
-                        value={pipelineText}
-                        onChange={(e) => setPipelineText(e.target.value)}
-                        className="w-full h-64 font-mono text-xs bg-muted/50 border border-input rounded-md p-3 resize-y focus:outline-none focus:ring-2 focus:ring-ring"
-                        spellCheck={false}
-                        placeholder="Enter your MongoDB aggregation pipeline as a JSON array..."
-                      />
-                      <p className="text-[11px] text-muted-foreground mt-1">
-                        Must contain at least one <code>$match</code> and end with a <code>$project</code> that includes <code>"objectId": 1</code>.
-                      </p>
-                    </div>
+                    {/* Visual Filter Builder (replaces raw textarea) */}
+                    <FilterBuilder
+                      schema={schema}
+                      onPipelineReady={() => {}}
+                      rawPipelineText={pipelineText}
+                      onRawPipelineChange={handlePipelineTextChange}
+                    />
 
                     <Separator />
 
@@ -276,7 +280,7 @@ export default function Filters() {
                   </div>
                 </TabsContent>
 
-                <TabsContent value="results">
+                <TabsContent value="results" forceMount className={activeTab !== "results" ? "hidden" : undefined}>
                   {loading && (
                     <div className="space-y-2">
                       {[1, 2, 3, 4, 5].map((i) => (
