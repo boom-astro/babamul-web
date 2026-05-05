@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -8,9 +8,12 @@ import { Separator } from "@/components/ui/separator";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { SchemaViewer } from "@/components/SchemaViewer";
 import { FilterBuilder } from "@/components/filter/FilterBuilder";
-import { fetchFilterTestCount, fetchFilterTest, fetchBoomSchema, type FilterTestParams, type FilterTestCountResult, type AvroSchema } from "@/lib/api";
+import type { FilterBuilderHandle } from "@/components/filter/FilterBuilder";
+import { FilterFieldBrowser } from "@/components/filter/FilterFieldBrowser";
+import { FilterHealthPanel } from "@/components/filter/FilterHealthPanel";
+import { flattenAvroSchema } from "@/lib/filterConstants";
+import { fetchFilterTestCount, fetchFilterTest, fetchBoomSchema, fetchTotalAlertCount, type FilterTestParams, type FilterTestCountResult, type AvroSchema } from "@/lib/api";
 import { ZTF_FALLBACK_SCHEMA } from "@/lib/ztfFallbackSchema";
 
 const DEFAULT_PIPELINE = `[
@@ -98,6 +101,9 @@ export default function Filters() {
   const [endJd, setEndJd] = useState("2461140.5");
   const [limit, setLimit] = useState("10");
 
+  // Ref for FilterBuilder imperative handle
+  const filterBuilderRef = useRef<FilterBuilderHandle>(null);
+
   // Stable callback for FilterBuilder
   const handlePipelineTextChange = useCallback((text: string) => {
     setPipelineText(text);
@@ -107,8 +113,16 @@ export default function Filters() {
   const [schema, setSchema] = useState<AvroSchema | null>(null);
   const [schemaLoading, setSchemaLoading] = useState(false);
 
+  // Flatten schema for FilterFieldBrowser
+  const fieldOptions = useMemo(() => {
+    if (!schema) return [];
+    return flattenAvroSchema(schema);
+  }, [schema]);
+
   // Results state
   const [countResult, setCountResult] = useState<FilterTestCountResult | null>(null);
+  const [totalCount, setTotalCount] = useState<number | null>(null);
+  const [queryTimeMs, setQueryTimeMs] = useState<number | null>(null);
   const [results, setResults] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(false);
   const [countLoading, setCountLoading] = useState(false);
@@ -169,9 +183,27 @@ export default function Filters() {
     setError(null);
     setLoading(true);
     setResults([]);
+    setTotalCount(null);
+    setQueryTimeMs(null);
+    const t0 = performance.now();
     try {
-      const data = await fetchFilterTest(buildParams(pipeline));
+      const params = buildParams(pipeline);
+      // Fire both requests in parallel: filter results + total count
+      const [data] = await Promise.all([
+        fetchFilterTest(params),
+        // Total count for health panel (fire and forget into state)
+        (startJd && endJd
+          ? fetchTotalAlertCount(survey, parseFloat(startJd), parseFloat(endJd), { [survey]: [1] })
+              .then((c) => setTotalCount(c))
+              .catch(() => setTotalCount(null))
+          : Promise.resolve()),
+      ]);
+      setQueryTimeMs(Math.round(performance.now() - t0));
       setResults(data);
+      // Also set the count from results length if we didn't already have it
+      if (!countResult) {
+        setCountResult({ count: data.length, pipeline });
+      }
       setActiveTab("results");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Filter test failed");
@@ -229,6 +261,7 @@ export default function Filters() {
 
                     {/* Visual Filter Builder (replaces raw textarea) */}
                     <FilterBuilder
+                      ref={filterBuilderRef}
                       schema={schema}
                       onPipelineReady={() => {}}
                       rawPipelineText={pipelineText}
@@ -293,6 +326,18 @@ export default function Filters() {
                     <div className="text-red-500 text-sm">{error}</div>
                   )}
 
+                  {/* Filter Health Panel — shown after results are available */}
+                  {!loading && !error && (results.length > 0 || countResult) && (
+                    <div className="mb-4">
+                      <FilterHealthPanel
+                        matchedCount={countResult?.count ?? results.length}
+                        totalCount={totalCount}
+                        results={results}
+                        queryTimeMs={queryTimeMs}
+                      />
+                    </div>
+                  )}
+
                   {!loading && !error && results.length > 0 && (
                     <div className="overflow-x-auto">
                       <Table>
@@ -321,7 +366,7 @@ export default function Filters() {
                     </div>
                   )}
 
-                  {!loading && !error && results.length === 0 && (
+                  {!loading && !error && results.length === 0 && !countResult && (
                     <div className="text-center text-muted-foreground py-8">
                       No results yet. Write a pipeline and click "Run Filter" to see matching alerts.
                     </div>
@@ -332,7 +377,7 @@ export default function Filters() {
           </Card>
         </div>
 
-        {/* Right column: Schema Explorer */}
+        {/* Right column: Field Browser */}
         <div className="space-y-4">
           {schemaLoading && (
             <Card>
@@ -349,8 +394,11 @@ export default function Filters() {
               </CardContent>
             </Card>
           )}
-          {!schemaLoading && schema && (
-            <SchemaViewer survey={survey} schema={schema} copy_button={false} />
+          {!schemaLoading && fieldOptions.length > 0 && (
+            <FilterFieldBrowser
+              fieldOptions={fieldOptions}
+              onFieldClick={(field) => filterBuilderRef.current?.addConditionWithField(field)}
+            />
           )}
         </div>
       </div>

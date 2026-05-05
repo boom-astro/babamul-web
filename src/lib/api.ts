@@ -519,14 +519,35 @@ export async function fetchFilterTest(params: FilterTestParams): Promise<Record<
 }
 
 export async function fetchBoomSchema(survey: string): Promise<AvroSchema> {
-  const url = `${BOOM_API_BASE}/babamul/surveys/${encodeURIComponent(survey).toLowerCase()}/schemas`;
+  const url = `${BOOM_API_BASE}/filters/schemas/${encodeURIComponent(survey).toUpperCase()}`;
   const res = await fetch(url);
   if (!res.ok) {
     const txt = await res.text().catch(() => "");
     throw new Error(`Fetch BOOM schema failed: ${res.status} ${txt}`);
   }
   const body = await parseResponseJson(res).catch(() => ({}));
-  return body as AvroSchema;
+  return unwrapData<AvroSchema>(body, {} as AvroSchema);
+}
+
+/**
+ * Fetch total alert count for a JD window (empty pipeline).
+ * Used by FilterHealthPanel to compute pass rate.
+ */
+export async function fetchTotalAlertCount(
+  survey: string,
+  startJd: number,
+  endJd: number,
+  permissions: Record<string, number[]>,
+): Promise<number> {
+  const params: FilterTestParams = {
+    pipeline: [{ "$match": {} }, { "$project": { "objectId": 1 } }],
+    survey,
+    permissions,
+    start_jd: startJd,
+    end_jd: endJd,
+  };
+  const result = await fetchFilterTestCount(params);
+  return result.count;
 }
 
 export default {

@@ -5,7 +5,7 @@
  * Includes LLM chat for natural language filter generation and Import/Export.
  */
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, forwardRef, useImperativeHandle } from "react";
 import { Button } from "@/components/ui/button";
 import { Code, Layers, ArrowUpDown } from "lucide-react";
 import type { FilterBlock, FilterNode, FieldOption } from "@/lib/filterSchema";
@@ -30,16 +30,48 @@ interface FilterBuilderProps {
   onRawPipelineChange: (text: string) => void;
 }
 
-export function FilterBuilder({
+/** Methods exposed via ref */
+export interface FilterBuilderHandle {
+  addConditionWithField: (field: string) => void;
+}
+
+export const FilterBuilder = forwardRef<FilterBuilderHandle, FilterBuilderProps>(function FilterBuilder({
   schema,
   onPipelineReady,
   projectionFields,
   rawPipelineText,
   onRawPipelineChange,
-}: FilterBuilderProps) {
+}, ref) {
   const [filters, setFilters] = useState<FilterBlock[]>(createDefaultFilter);
   const [mode, setMode] = useState<"visual" | "advanced">("visual");
   const [importExportOpen, setImportExportOpen] = useState(false);
+
+  // Expose addConditionWithField to parent via ref
+  useImperativeHandle(ref, () => ({
+    addConditionWithField(field: string) {
+      setFilters((prev) => {
+        const newCond = {
+          id: `cond-${Date.now()}`,
+          category: "condition" as const,
+          field,
+          operator: "$gt",
+          value: "",
+        };
+        // Add to the first root block's children
+        if (prev.length > 0) {
+          const updated = [...prev];
+          updated[0] = {
+            ...updated[0],
+            children: [...updated[0].children, newCond],
+          };
+          return updated;
+        }
+        return prev;
+      });
+      // Switch to visual mode if in advanced
+      setMode("visual");
+    },
+  }), []);
 
   // Flatten the Avro schema into field options for dropdowns
   const fieldOptions: FieldOption[] = useMemo(() => {
@@ -199,4 +231,4 @@ export function FilterBuilder({
       />
     </div>
   );
-}
+});

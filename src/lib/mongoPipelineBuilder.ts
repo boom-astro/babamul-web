@@ -130,7 +130,17 @@ export function convertToMongoPipeline(
   }
 
   // Build the $project stage
-  const project: Record<string, unknown> = { objectId: 1 };
+  const project: Record<string, unknown> = {
+    objectId: 1,
+    "candidate.magpsf": 1,
+    "candidate.ra": 1,
+    "candidate.dec": 1,
+    "candidate.jd": 1,
+    "candidate.drb": 1,
+    classifications: 1,
+    properties: 1,
+    coordinates: 1,
+  };
 
   if (projectionFields) {
     for (const field of projectionFields) {
