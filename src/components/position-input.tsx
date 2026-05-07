@@ -57,7 +57,7 @@ export const POSITION_FORMATS: FormatDef[] = [
   // The captured suffix character (h or d) determines the RA conversion.
   {
     name: "Decimal with unit suffix",
-    example: "12.34567h-17.87654d · 350.123d-17.333d",
+    example: "12.34567h-17.87654d",
     regex: /^\s*(\d+(?:\.\d+)?)([hd])[\s,]*([+-]?\d+(?:\.\d+)?)d\s*$/i,
     parse([, raVal, raSuffix, decVal]) {
       return {
