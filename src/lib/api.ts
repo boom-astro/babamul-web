@@ -279,6 +279,7 @@ export type AlertSearchParams = {
   is_star?: boolean;
   is_near_brightstar?: boolean;
   is_stationary?: boolean;
+  is_positive?: boolean;
   limit?: number;
   skip?: number;
 };

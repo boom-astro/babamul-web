@@ -2,7 +2,7 @@ import { useState, FormEvent, useRef } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import api, { Alert, AlertSearchParams } from "@/lib/api";
@@ -39,6 +39,7 @@ export default function Query() {
   const [isStar, setIsStar] = useState<BoolFilter>('any');
   const [isNearBrightstar, setIsNearBrightstar] = useState<BoolFilter>('any');
   const [isStationary, setIsStationary] = useState<BoolFilter>('any');
+  const [isPositive, setIsPositive] = useState<BoolFilter>('any');
 
   // Alert results state
   const [alerts, setAlerts] = useState<Alert[]>([]);
@@ -50,9 +51,6 @@ export default function Query() {
 
   function handleTimeFormatChange(fmt: TimeFormat) {
     setTimeFormat(fmt);
-    const d = timeFormatDefaults(fmt);
-    setStartTime(d.start);
-    setEndTime(d.end);
   }
 
   const filterProps: AlertFilterFormProps = {
@@ -64,6 +62,7 @@ export default function Query() {
     isRock, setIsRock, isStar, setIsStar,
     isNearBrightstar, setIsNearBrightstar,
     isStationary, setIsStationary,
+    isPositive, setIsPositive,
   };
 
   async function executeSearch(survey: 'ZTF' | 'LSST', params: AlertSearchParams, searchType: string) {
@@ -121,6 +120,7 @@ export default function Query() {
       if (isStar !== 'any') baseParams.is_star = isStar === 'true';
       if (isNearBrightstar !== 'any') baseParams.is_near_brightstar = isNearBrightstar === 'true';
       if (isStationary !== 'any') baseParams.is_stationary = isStationary === 'true';
+      if (isPositive !== 'any') baseParams.is_positive = isPositive === 'true';
       analytics.trackAlertSearchSubmitted({
         survey: alertSurvey, search_type: searchType,
         has_date_filter: !!(startJd || endJd),
@@ -151,21 +151,10 @@ export default function Query() {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "object" | "alerts")}>
-            <div className="flex h-10 w-full items-center rounded-lg bg-muted p-0.5 mb-4 text-md">
-              {([['object', 'Object Lookup'], ['alerts', 'Alert Search']] as const).map(([val, label]) => (
-                <button
-                  key={val}
-                  type="button"
-                  onClick={() => setActiveTab(val)}
-                  className={cn(
-                    "flex h-full flex-1 items-center justify-center rounded-md border border-transparent px-3 font-medium whitespace-nowrap transition-[color,box-shadow]",
-                    activeTab === val
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >{label}</button>
-              ))}
-            </div>
+            <TabsList className="grid w-full grid-cols-2 mb-4">
+              <TabsTrigger value="object">Objects</TabsTrigger>
+              <TabsTrigger value="alerts">Alerts</TabsTrigger>
+            </TabsList>
 
             <TabsContent value="object">
               <SearchContent
@@ -184,17 +173,17 @@ export default function Query() {
                   <div className="flex flex-col sm:flex-row gap-3">
                     <div className="rounded-lg border bg-muted/40 p-4 flex flex-col gap-3 sm:min-w-48">
                       <span className="text-base font-semibold">Survey</span>
-                      <div className="flex h-9 items-center rounded-lg bg-muted p-0.5 text-sm">
+                      <div className="flex h-9 items-center gap-1.5 text-sm">
                         {(['ZTF', 'LSST'] as const).map(s => (
                           <button
                             key={s}
                             type="button"
                             onClick={() => setAlertSurvey(s)}
                             className={cn(
-                              "flex h-full flex-1 items-center justify-center rounded-md border border-transparent px-4 font-medium whitespace-nowrap transition-[color,box-shadow]",
+                              "flex h-full flex-1 items-center justify-center rounded-md border px-4 font-medium whitespace-nowrap transition-colors",
                               alertSurvey === s
-                                ? "bg-background text-foreground shadow-sm"
-                                : "text-muted-foreground hover:text-foreground"
+                                ? "bg-primary text-primary-foreground border-primary"
+                                : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
                             )}
                           >{s}</button>
                         ))}
@@ -202,17 +191,17 @@ export default function Query() {
                     </div>
                     <div className="rounded-lg border bg-muted/40 p-4 flex flex-col gap-3 flex-1">
                       <span className="text-base font-semibold">Query Type</span>
-                      <div className="flex h-9 items-center rounded-lg bg-muted p-0.5 text-sm">
+                      <div className="flex h-9 items-center gap-1.5 text-sm">
                         {([['filters', 'Filters'], ['object', 'Object ID'], ['position', 'Position']] as const).map(([val, label]) => (
                           <button
                             key={val}
                             type="button"
                             onClick={() => handleAlertSearchTabChange(val)}
                             className={cn(
-                              "flex h-full flex-1 items-center justify-center rounded-md border border-transparent px-3 font-medium whitespace-nowrap transition-[color,box-shadow]",
+                              "flex h-full flex-1 items-center justify-center rounded-md border px-3 font-medium whitespace-nowrap transition-colors",
                               alertSearchTab === val
-                                ? "bg-background text-foreground shadow-sm"
-                                : "text-muted-foreground hover:text-foreground"
+                                ? "bg-primary text-primary-foreground border-primary"
+                                : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
                             )}
                           >{label}</button>
                         ))}

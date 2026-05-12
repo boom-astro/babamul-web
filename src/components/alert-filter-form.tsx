@@ -25,11 +25,24 @@ export type AlertFilterFormProps = {
   isStar: BoolFilter;           setIsStar: (v: BoolFilter) => void;
   isNearBrightstar: BoolFilter; setIsNearBrightstar: (v: BoolFilter) => void;
   isStationary: BoolFilter;     setIsStationary: (v: BoolFilter) => void;
+  isPositive: BoolFilter;       setIsPositive: (v: BoolFilter) => void;
 };
 
 export function toDatetimeLocalString(date: Date): string {
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function toDatetimeUTCString(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}T${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}`;
+}
+
+function jdToFormatString(jd: number, format: TimeFormat): string {
+  if (format === 'jd') return jd.toFixed(5);
+  if (format === 'mjd') return (jd - 2400000.5).toFixed(5);
+  const date = new Date((jd - 2440587.5) * 86400000);
+  return format === 'utc' ? toDatetimeUTCString(date) : toDatetimeLocalString(date);
 }
 
 export function datetimeLocalDefaults() {
@@ -70,9 +83,11 @@ function TimeFormatSelect({ value, onChange }: { value: TimeFormat; onChange: (v
 function TimeInput({ id, value, onChange, format, className }: {
   id: string; value: string; onChange: (v: string) => void; format: TimeFormat; className?: string;
 }) {
-  const shared = { id, value, onChange: (e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value), className };
-  if (format === 'local' || format === 'utc') return <Input {...shared} type="datetime-local" />;
-  return <Input {...shared} type="number" step="any" placeholder={format === 'jd' ? '2459000.5' : '59000.0'} />;
+  const base = { id, value, onChange: (e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value) };
+  if (format === 'local' || format === 'utc') return (
+    <Input {...base} type="datetime-local" className={cn("pr-1.5", className)} />
+  );
+  return <Input {...base} type="number" step="any" placeholder={format === 'jd' ? '2459000.5' : '59000.0'} className={className} />;
 }
 
 // ─── Time presets ─────────────────────────────────────────────────────────────
@@ -96,13 +111,9 @@ function getWindowMs(start: string, end: string, format: TimeFormat): number | n
 function applyPreset(ms: number, format: TimeFormat): { start: string; end: string } {
   const now = new Date();
   const start = new Date(now.getTime() - ms);
-  if (format === 'local' || format === 'utc') {
-    return { start: toDatetimeLocalString(start), end: toDatetimeLocalString(now) };
-  }
   const nowJd = now.getTime() / 86400000 + 2440587.5;
   const startJd = start.getTime() / 86400000 + 2440587.5;
-  if (format === 'jd') return { start: startJd.toFixed(5), end: nowJd.toFixed(5) };
-  return { start: (startJd - 2400000.5).toFixed(5), end: (nowJd - 2400000.5).toFixed(5) };
+  return { start: jdToFormatString(startJd, format), end: jdToFormatString(nowJd, format) };
 }
 
 // ─── CycleTile ────────────────────────────────────────────────────────────────
@@ -156,6 +167,14 @@ function propertyTooltips(survey: 'ZTF' | 'LSST') {
     </>
   );
 
+  const positive = (
+    <>
+      <span className={T.green}>True</span> (<code>isdiffpos</code>) if the subtraction residual is positive — the source appears <em>brighter</em> than the reference image.
+      <br /><span className={T.red}>False</span> for a negative residual (source fainter than reference).
+      <br />Most real transients produce positive subtractions.
+    </>
+  );
+
   if (survey === 'ZTF') {
     return {
       rock: (
@@ -179,6 +198,7 @@ function propertyTooltips(survey: 'ZTF' | 'LSST') {
         </>
       ),
       stationary,
+      positive,
     };
   }
 
@@ -205,6 +225,7 @@ function propertyTooltips(survey: 'ZTF' | 'LSST') {
       </>
     ),
     stationary,
+    positive,
   };
 }
 
@@ -226,6 +247,20 @@ function TimeCard({ timeFormat, onTimeFormatChange, startTime, setStartTime, end
   };
   const onCustom = (setter: (v: string) => void) => (v: string) => { setter(v); setActivePreset(null); };
 
+  const handleFormatChange = (newFmt: TimeFormat) => {
+    if (activePreset !== null) {
+      const { start, end } = applyPreset(activePreset, newFmt);
+      setStartTime(start);
+      setEndTime(end);
+    } else {
+      const startJd = toJd(startTime, timeFormat);
+      const endJd = toJd(endTime, timeFormat);
+      if (startJd !== undefined) setStartTime(jdToFormatString(startJd, newFmt));
+      if (endJd !== undefined) setEndTime(jdToFormatString(endJd, newFmt));
+    }
+    onTimeFormatChange(newFmt);
+  };
+
   const windowMs = activePreset === null ? getWindowMs(startTime, endTime, timeFormat) : null;
   const windowError =
     windowMs !== null && windowMs > MAX_WINDOW_MS ? 'Time range cannot exceed 24 hours' :
@@ -236,7 +271,10 @@ function TimeCard({ timeFormat, onTimeFormatChange, startTime, setStartTime, end
     <div className="rounded-lg border bg-muted/40 p-4">
       <div className="flex items-center justify-between mb-3">
         <span className="text-base font-semibold">Time Range</span>
-        <TimeFormatSelect value={timeFormat} onChange={onTimeFormatChange} />
+        {/* on small screens the select lives here in the header */}
+        <div className="md:hidden">
+          <TimeFormatSelect value={timeFormat} onChange={handleFormatChange} />
+        </div>
       </div>
       <div className="flex gap-1.5 mb-3">
         {TIME_PRESETS.map(({ label, ms }) => (
@@ -254,16 +292,20 @@ function TimeCard({ timeFormat, onTimeFormatChange, startTime, setStartTime, end
           Custom
         </button>
       </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-end gap-3">
+        <div className="flex-1">
           <Label className="text-sm text-muted-foreground mb-1 block">Start</Label>
           <TimeInput id="t-start" value={startTime} onChange={onCustom(setStartTime)} format={timeFormat}
             className={windowError ? 'border-destructive focus-visible:ring-destructive' : undefined} />
         </div>
-        <div>
+        <div className="flex-1">
           <Label className="text-sm text-muted-foreground mb-1 block">End</Label>
           <TimeInput id="t-end" value={endTime} onChange={onCustom(setEndTime)} format={timeFormat}
             className={windowError ? 'border-destructive focus-visible:ring-destructive' : undefined} />
+        </div>
+        {/* on sm+ the select drops down here, inline with the inputs */}
+        <div className="hidden md:block">
+          <TimeFormatSelect value={timeFormat} onChange={handleFormatChange} />
         </div>
       </div>
       {windowError && <p className="text-xs text-destructive mt-2 text-center">{windowError}</p>}
@@ -271,30 +313,60 @@ function TimeCard({ timeFormat, onTimeFormatChange, startTime, setStartTime, end
   );
 }
 
+type ProfileValues = { isRock: BoolFilter; isStar: BoolFilter; isNearBrightstar: BoolFilter; isStationary: BoolFilter; isPositive: BoolFilter };
+
+const PROFILES: Array<{ label: string; values: ProfileValues }> = [
+  { label: 'Transient', values: { isRock: 'false', isStar: 'false', isNearBrightstar: 'false', isStationary: 'true', isPositive: 'true' } },
+  { label: 'Stellar',   values: { isRock: 'false', isStar: 'true',  isNearBrightstar: 'true',  isStationary: 'true', isPositive: 'any'  } },
+  { label: 'SSO',       values: { isRock: 'true',  isStar: 'false', isNearBrightstar: 'false', isStationary: 'any',  isPositive: 'any'  } },
+];
+
 type PropertiesCardProps = {
   survey: 'ZTF' | 'LSST';
   isRock: BoolFilter; setIsRock: (v: BoolFilter) => void;
   isStar: BoolFilter; setIsStar: (v: BoolFilter) => void;
   isNearBrightstar: BoolFilter; setIsNearBrightstar: (v: BoolFilter) => void;
   isStationary: BoolFilter; setIsStationary: (v: BoolFilter) => void;
+  isPositive: BoolFilter; setIsPositive: (v: BoolFilter) => void;
 };
 
-function PropertiesCard({ survey, isRock, setIsRock, isStar, setIsStar, isNearBrightstar, setIsNearBrightstar, isStationary, setIsStationary }: PropertiesCardProps) {
+function PropertiesCard({ survey, isRock, setIsRock, isStar, setIsStar, isNearBrightstar, setIsNearBrightstar, isStationary, setIsStationary, isPositive, setIsPositive }: PropertiesCardProps) {
   const tips = propertyTooltips(survey);
   const fields: Array<{ label: string; value: BoolFilter; set: (v: BoolFilter) => void; tooltip: ReactNode }> = [
     { label: 'Rock',             value: isRock,           set: setIsRock,           tooltip: tips.rock },
     { label: 'Star',             value: isStar,           set: setIsStar,           tooltip: tips.star },
     { label: 'Near bright star', value: isNearBrightstar, set: setIsNearBrightstar, tooltip: tips.near_brightstar },
     { label: 'Stationary',       value: isStationary,     set: setIsStationary,     tooltip: tips.stationary },
+    { label: 'Positive sub.',    value: isPositive,       set: setIsPositive,       tooltip: tips.positive },
   ];
+
+  const current: ProfileValues = { isRock, isStar, isNearBrightstar, isStationary, isPositive };
+  const resetAll = () => { setIsRock('any'); setIsStar('any'); setIsNearBrightstar('any'); setIsStationary('any'); setIsPositive('any'); };
+  const isActive = (v: ProfileValues) => (Object.keys(v) as (keyof ProfileValues)[]).every(k => v[k] === current[k]);
+  const toggleProfile = (v: ProfileValues) => isActive(v) ? resetAll() : (setIsRock(v.isRock), setIsStar(v.isStar), setIsNearBrightstar(v.isNearBrightstar), setIsStationary(v.isStationary), setIsPositive(v.isPositive));
 
   return (
     <div className="rounded-lg border bg-muted/40 p-4">
       <div className="flex items-center justify-between mb-3">
         <span className="text-base font-semibold">Properties</span>
-        <span className="text-xs text-muted-foreground/60">Click to cycle</span>
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs text-muted-foreground/60 mr-1">Click to cycle</span>
+          {PROFILES.map(({ label, values }) => (
+            <button
+              key={label}
+              type="button"
+              onClick={() => toggleProfile(values)}
+              className={cn(
+                "text-xs px-2 py-0.5 rounded-full border transition-colors",
+                isActive(values)
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+              )}
+            >{label}</button>
+          ))}
+        </div>
       </div>
-      <div className="grid grid-cols-2 gap-2.5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
         {fields.map(({ label, value, set, tooltip }) => (
           <CycleTile key={label} label={label} value={value} onChange={set} tooltip={tooltip} />
         ))}
@@ -357,6 +429,7 @@ function FiltersVisual({
   minMag, setMinMag, maxMag, setMaxMag,
   minDrb, setMinDrb, maxDrb, setMaxDrb,
   isRock, setIsRock, isStar, setIsStar, isNearBrightstar, setIsNearBrightstar, isStationary, setIsStationary,
+  isPositive, setIsPositive,
 }: AlertFilterFormProps) {
   const [activePreset, setActivePreset] = useState<number | null>(24 * 3_600_000);
 
@@ -374,6 +447,7 @@ function FiltersVisual({
         isStar={isStar} setIsStar={setIsStar}
         isNearBrightstar={isNearBrightstar} setIsNearBrightstar={setIsNearBrightstar}
         isStationary={isStationary} setIsStationary={setIsStationary}
+        isPositive={isPositive} setIsPositive={setIsPositive}
       />
       <div className="rounded-lg border bg-muted/40 p-4 space-y-4">
         <span className="text-base font-semibold block">Cuts</span>
