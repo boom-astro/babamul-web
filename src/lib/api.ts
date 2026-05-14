@@ -550,6 +550,60 @@ export async function fetchTotalAlertCount(
   return result.count;
 }
 
+// --- Milvus Vector Search (via proxy) ---
+
+const MILVUS_API_BASE = import.meta.env.VITE_MILVUS_PROXY_URL || "/api/milvus";
+
+export type MilvusNeighbour = {
+  object_id: string;
+  classification: string;
+  recon_error: number;
+  anomaly_score: number;
+  distance: number;
+};
+
+export type MilvusSearchResponse = {
+  query_object_id: string | null;
+  neighbours: MilvusNeighbour[];
+  search_time_ms: number;
+  total_entities: number;
+};
+
+export type MilvusSearchParams = {
+  object_id: string;
+  top_k?: number;
+  min_recon_error?: number;
+  classification?: string;
+};
+
+export type MilvusHealthResponse = {
+  status: string;
+  collection: string;
+  entities: number;
+  milvus_host: string;
+};
+
+export async function searchSimilarObjects(params: MilvusSearchParams): Promise<MilvusSearchResponse> {
+  const res = await fetch(`${MILVUS_API_BASE}/search`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(params),
+  });
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    throw new Error(`Vector search failed: ${res.status} ${txt}`);
+  }
+  return (await res.json()) as MilvusSearchResponse;
+}
+
+export async function fetchMilvusHealth(): Promise<MilvusHealthResponse> {
+  const res = await fetch(`${MILVUS_API_BASE}/health`);
+  if (!res.ok) {
+    throw new Error(`Milvus health check failed: ${res.status}`);
+  }
+  return (await res.json()) as MilvusHealthResponse;
+}
+
 export default {
   login,
   logout,
@@ -566,4 +620,6 @@ export default {
   fetchFilterTestCount,
   fetchFilterTest,
   fetchBoomSchema,
+  searchSimilarObjects,
+  fetchMilvusHealth,
 };

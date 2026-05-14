@@ -12,6 +12,7 @@ import { FilterBuilder } from "@/components/filter/FilterBuilder";
 import type { FilterBuilderHandle } from "@/components/filter/FilterBuilder";
 import { FilterFieldBrowser } from "@/components/filter/FilterFieldBrowser";
 import { FilterHealthPanel } from "@/components/filter/FilterHealthPanel";
+import { VectorSearchPanel } from "@/components/filter/VectorSearchPanel";
 import { flattenAvroSchema } from "@/lib/filterConstants";
 import { fetchFilterTestCount, fetchFilterTest, fetchBoomSchema, fetchTotalAlertCount, type FilterTestParams, type FilterTestCountResult, type AvroSchema } from "@/lib/api";
 import { ZTF_FALLBACK_SCHEMA } from "@/lib/ztfFallbackSchema";
@@ -400,6 +401,9 @@ export default function Filters() {
               onFieldClick={(field) => filterBuilderRef.current?.addConditionWithField(field)}
             />
           )}
+
+          {/* Vector Search Panel */}
+          <VectorSearchPanel />
         </div>
       </div>
     </div>

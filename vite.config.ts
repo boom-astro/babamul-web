@@ -71,6 +71,11 @@ export default defineConfig(({ mode }) => {
     server: {
       // Dev proxy to avoid CORS when backend runs on localhost:4000
       proxy: {
+        '/api/milvus': {
+          target: env.VITE_MILVUS_PROXY_TARGET || 'http://localhost:8100',
+          changeOrigin: true,
+          secure: false,
+        },
         '/api': {
           target: env.VITE_API_PROXY_TARGET || 'http://localhost:4000',
           changeOrigin: true,
