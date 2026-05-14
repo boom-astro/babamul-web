@@ -1,6 +1,9 @@
 // Always use the same-origin proxy; production should map /api to the backend via the web server
 const API_BASE = "/api/babamul";
 
+// BOOM main API base URL for filter testing (public endpoints)
+const BOOM_API_BASE = import.meta.env.VITE_BOOM_API_URL || "/api";
+
 export type TokenRecord = {
   access_token: string;
   token_type: string;
@@ -472,6 +475,138 @@ export async function searchObjects(value: string, limit: number = 10): Promise<
   return { results, message };
 }
 
+// --- Filter Testing (public, no auth required) ---
+
+export type FilterTestParams = {
+  pipeline: Record<string, unknown>[];
+  survey: string;
+  permissions: Record<string, number[]>;
+  start_jd?: number;
+  end_jd?: number;
+  limit?: number;
+};
+
+export type FilterTestCountResult = {
+  count: number;
+  pipeline: unknown[];
+};
+
+export async function fetchFilterTestCount(params: FilterTestParams): Promise<FilterTestCountResult> {
+  const res = await fetch(`${BOOM_API_BASE}/filters/test/count`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(params),
+  });
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    throw new Error(`Filter count failed: ${res.status} ${txt}`);
+  }
+  const body = await parseResponseJson(res).catch(() => ({}));
+  return unwrapData<FilterTestCountResult>(body, { count: 0, pipeline: [] });
+}
+
+export async function fetchFilterTest(params: FilterTestParams): Promise<Record<string, unknown>[]> {
+  const res = await fetch(`${BOOM_API_BASE}/filters/test`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(params),
+  });
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    throw new Error(`Filter test failed: ${res.status} ${txt}`);
+  }
+  const body = await parseResponseJson(res).catch(() => ({}));
+  const result = unwrapData<{ results?: unknown[] }>(body, { results: [] });
+  const resultsArray = result && result.results;
+  return Array.isArray(resultsArray) ? (resultsArray as Record<string, unknown>[]) : [];
+}
+
+export async function fetchBoomSchema(survey: string): Promise<AvroSchema> {
+  const url = `${BOOM_API_BASE}/filters/schemas/${encodeURIComponent(survey).toUpperCase()}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    throw new Error(`Fetch BOOM schema failed: ${res.status} ${txt}`);
+  }
+  const body = await parseResponseJson(res).catch(() => ({}));
+  return unwrapData<AvroSchema>(body, {} as AvroSchema);
+}
+
+/**
+ * Fetch total alert count for a JD window (empty pipeline).
+ * Used by FilterHealthPanel to compute pass rate.
+ */
+export async function fetchTotalAlertCount(
+  survey: string,
+  startJd: number,
+  endJd: number,
+  permissions: Record<string, number[]>,
+): Promise<number> {
+  const params: FilterTestParams = {
+    pipeline: [{ "$match": {} }, { "$project": { "objectId": 1 } }],
+    survey,
+    permissions,
+    start_jd: startJd,
+    end_jd: endJd,
+  };
+  const result = await fetchFilterTestCount(params);
+  return result.count;
+}
+
+// --- Milvus Vector Search (via proxy) ---
+
+const MILVUS_API_BASE = import.meta.env.VITE_MILVUS_PROXY_URL || "/api/milvus";
+
+export type MilvusNeighbour = {
+  object_id: string;
+  classification: string;
+  recon_error: number;
+  anomaly_score: number;
+  distance: number;
+};
+
+export type MilvusSearchResponse = {
+  query_object_id: string | null;
+  neighbours: MilvusNeighbour[];
+  search_time_ms: number;
+  total_entities: number;
+};
+
+export type MilvusSearchParams = {
+  object_id: string;
+  top_k?: number;
+  min_recon_error?: number;
+  classification?: string;
+};
+
+export type MilvusHealthResponse = {
+  status: string;
+  collection: string;
+  entities: number;
+  milvus_host: string;
+};
+
+export async function searchSimilarObjects(params: MilvusSearchParams): Promise<MilvusSearchResponse> {
+  const res = await fetch(`${MILVUS_API_BASE}/search`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(params),
+  });
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    throw new Error(`Vector search failed: ${res.status} ${txt}`);
+  }
+  return (await res.json()) as MilvusSearchResponse;
+}
+
+export async function fetchMilvusHealth(): Promise<MilvusHealthResponse> {
+  const res = await fetch(`${MILVUS_API_BASE}/health`);
+  if (!res.ok) {
+    throw new Error(`Milvus health check failed: ${res.status}`);
+  }
+  return (await res.json()) as MilvusHealthResponse;
+}
+
 export default {
   login,
   logout,
@@ -485,4 +620,9 @@ export default {
   fetchObjCutouts,
   fetchStats,
   fetchCollectionStats,
+  fetchFilterTestCount,
+  fetchFilterTest,
+  fetchBoomSchema,
+  searchSimilarObjects,
+  fetchMilvusHealth,
 };
