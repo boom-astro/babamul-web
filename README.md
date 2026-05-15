@@ -36,6 +36,16 @@ A React + TypeScript + Vite front end for the BOOM application.
    ```
    The app will be available at `http://localhost:5173`
 
+### Pre-commit hook
+
+Install our pre-commit hook:
+
+```bash
+uv run pre-commit install
+```
+
+This will check your changes before each commit to ensure that they conform with our code style standards. We use ruff to lint and reformat Python code, and Prettier for JavaScript. We also run ESLint to catch several common Redux usage bugs.
+
 ### Notes
 
 - `docker-compose.override.yaml` is automatically applied for local development
