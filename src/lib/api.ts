@@ -2,7 +2,7 @@
 const API_BASE = "/api/babamul";
 
 // BOOM main API base URL for filter testing (public endpoints)
-const BOOM_API_BASE = import.meta.env.VITE_BOOM_API_URL || "/api";
+const BOOM_API_BASE = import.meta.env.VITE_BOOM_NRP_API_URL || "/api";
 
 export type TokenRecord = {
   access_token: string;
