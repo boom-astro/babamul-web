@@ -10,7 +10,8 @@ import { AlertTriangle, CheckCircle, XCircle, Activity, BarChart3, Sparkles, Clo
 
 interface FilterHealthPanelProps {
   matchedCount: number;
-  totalCount: number | null; // null = still loading
+  totalCount: number | null; // null = unavailable (not requested or fetch failed)
+  totalCountLoading: boolean; // true = fetch in flight
   results: Record<string, unknown>[];
   queryTimeMs?: number | null;
 }
@@ -29,19 +30,21 @@ function getNestedValue(obj: Record<string, unknown>, path: string): unknown {
   return current;
 }
 
-export function FilterHealthPanel({ matchedCount, totalCount, results, queryTimeMs }: FilterHealthPanelProps) {
+export function FilterHealthPanel({ matchedCount, totalCount, totalCountLoading, results, queryTimeMs }: FilterHealthPanelProps) {
   // ─── Throughput ─────────────────────────────────────────────────
   const passRate = totalCount && totalCount > 0
     ? (matchedCount / totalCount) * 100
     : null;
 
-  const throughputStatus = passRate === null
+  const throughputStatus = totalCountLoading
     ? "loading"
-    : passRate <= GOOD_THRESHOLD
-      ? "good"
-      : passRate <= WARN_THRESHOLD
-        ? "warn"
-        : "bad";
+    : passRate === null
+      ? "unavailable"
+      : passRate <= GOOD_THRESHOLD
+        ? "good"
+        : passRate <= WARN_THRESHOLD
+          ? "warn"
+          : "bad";
 
   // ─── Classification Breakdown ────────────────────────────────────
   const classChecks = [
@@ -99,6 +102,9 @@ export function FilterHealthPanel({ matchedCount, totalCount, results, queryTime
             {throughputStatus === "loading" && (
               <div className="h-4 w-4 rounded-full border-2 border-muted-foreground/30 border-t-primary animate-spin" />
             )}
+            {throughputStatus === "unavailable" && (
+              <div className="h-4 w-4 rounded-full border-2 border-muted-foreground/30" />
+            )}
             <span className="text-xs font-medium">Throughput</span>
           </div>
 
@@ -132,8 +138,12 @@ export function FilterHealthPanel({ matchedCount, totalCount, results, queryTime
                     : `Over ${WARN_THRESHOLD}% — filter is too broad. It would be rejected on activation.`}
               </p>
             </>
-          ) : (
+          ) : throughputStatus === "loading" ? (
             <p className="text-xs text-muted-foreground">Calculating total alert count...</p>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Total alert count unavailable.
+            </p>
           )}
         </div>
 

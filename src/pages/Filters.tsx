@@ -121,6 +121,7 @@ export default function Filters() {
 
   // Results state
   const [countResult, setCountResult] = useState<FilterTestCountResult | null>(null);
+  const [totalCountLoading, setTotalCountLoading] = useState(false);
   const [totalCount, setTotalCount] = useState<number | null>(null);
   const [queryTimeMs, setQueryTimeMs] = useState<number | null>(null);
   const [results, setResults] = useState<Record<string, unknown>[]>([]);
@@ -189,14 +190,17 @@ export default function Filters() {
     try {
       const params = buildParams(pipeline);
       // Fire both requests in parallel: filter results + total count
+      let totalCountPromise: Promise<void> = Promise.resolve();
+      if (startJd && endJd) {
+        setTotalCountLoading(true);
+        totalCountPromise = fetchTotalAlertCount(survey, parseFloat(startJd), parseFloat(endJd), { [survey]: [1] })
+          .then((c) => setTotalCount(c))
+          .catch(() => setTotalCount(null))
+          .finally(() => setTotalCountLoading(false));
+      }
       const [data] = await Promise.all([
         fetchFilterTest(params),
-        // Total count for health panel (fire and forget into state)
-        (startJd && endJd
-          ? fetchTotalAlertCount(survey, parseFloat(startJd), parseFloat(endJd), { [survey]: [1] })
-              .then((c) => setTotalCount(c))
-              .catch(() => setTotalCount(null))
-          : Promise.resolve()),
+        totalCountPromise,
       ]);
       setQueryTimeMs(Math.round(performance.now() - t0));
       setResults(data);
@@ -331,6 +335,7 @@ export default function Filters() {
                       <FilterHealthPanel
                         matchedCount={countResult?.count ?? results.length}
                         totalCount={totalCount}
+                        totalCountLoading={totalCountLoading}
                         results={results}
                         queryTimeMs={queryTimeMs}
                       />
