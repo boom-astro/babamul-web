@@ -21,8 +21,6 @@ import type { AvroSchema } from "@/lib/api";
 interface FilterBuilderProps {
   /** The Avro schema for the current survey (used to populate field dropdowns) */
   schema: AvroSchema | null;
-  /** Callback when the user wants to run the generated pipeline */
-  onPipelineReady: (pipeline: Record<string, unknown>[]) => void;
   /** Additional projection fields to include (beyond objectId) */
   projectionFields?: string[];
   /** External raw pipeline text for Advanced Mode sync */
@@ -37,7 +35,6 @@ export interface FilterBuilderHandle {
 
 export const FilterBuilder = forwardRef<FilterBuilderHandle, FilterBuilderProps>(function FilterBuilder({
   schema,
-  onPipelineReady,
   projectionFields,
   rawPipelineText,
   onRawPipelineChange,

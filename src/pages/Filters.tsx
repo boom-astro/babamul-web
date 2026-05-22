@@ -263,7 +263,6 @@ export default function Filters() {
                     <FilterBuilder
                       ref={filterBuilderRef}
                       schema={schema}
-                      onPipelineReady={() => {}}
                       rawPipelineText={pipelineText}
                       onRawPipelineChange={handlePipelineTextChange}
                     />
