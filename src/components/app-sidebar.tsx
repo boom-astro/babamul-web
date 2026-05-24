@@ -10,6 +10,7 @@ import {
   IconNotebook,
   IconBook,
   IconFilter,
+  IconBox,
 } from "@tabler/icons-react"
 
 import { NavDocuments } from "@/components/nav-documents"
@@ -43,6 +44,11 @@ const data = {
       title: "Filters",
       url: "/filters",
       icon: IconFilter,
+    },
+    {
+      title: "Embedding Explorer",
+      url: "/explorer",
+      icon: IconBox,
     },
   ],
   navSecondary: [

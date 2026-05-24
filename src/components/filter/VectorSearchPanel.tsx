@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,9 @@ interface VectorSearchPanelProps {
 }
 
 export function VectorSearchPanel({ defaultObjectId }: VectorSearchPanelProps) {
-  const [objectId, setObjectId] = useState(defaultObjectId || "");
+  const [searchParams] = useSearchParams();
+  const urlObjectId = searchParams.get("vectorSearch");
+  const [objectId, setObjectId] = useState(urlObjectId || defaultObjectId || "");
   const [topK, setTopK] = useState(10);
   const [classFilter, setClassFilter] = useState<string>("all");
   const [minReconError, setMinReconError] = useState<string>("");
@@ -45,6 +48,14 @@ export function VectorSearchPanel({ defaultObjectId }: VectorSearchPanelProps) {
       .finally(() => { if (!cancelled) setHealthLoading(false); });
     return () => { cancelled = true; };
   }, []);
+
+  // Auto-search when navigated here from Explorer with a pre-filled ID
+  useEffect(() => {
+    if (urlObjectId && health?.status === "ok") {
+      handleSearch();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlObjectId, health?.status]);
 
   const handleSearch = useCallback(async () => {
     if (!objectId.trim()) return;

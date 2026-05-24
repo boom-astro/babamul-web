@@ -604,6 +604,34 @@ export async function fetchMilvusHealth(): Promise<MilvusHealthResponse> {
   return (await res.json()) as MilvusHealthResponse;
 }
 
+// --- Milvus 3D Embedding Explorer ---
+
+export type EmbeddingPoint = {
+  id: string;
+  x: number;
+  y: number;
+  z: number;
+  classification: string;
+  recon_error: number;
+  anomaly_score: number;
+};
+
+export type EmbeddingsResponse = {
+  points: EmbeddingPoint[];
+  count: number;
+  compute_time_ms: number;
+};
+
+export async function fetchEmbeddings3D(refresh = false): Promise<EmbeddingsResponse> {
+  const url = `${MILVUS_API_BASE}/embeddings-3d${refresh ? "?refresh=true" : ""}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    throw new Error(`Failed to fetch 3D embeddings: ${res.status} ${txt}`);
+  }
+  return (await res.json()) as EmbeddingsResponse;
+}
+
 export default {
   login,
   logout,
@@ -622,4 +650,5 @@ export default {
   fetchBoomSchema,
   searchSimilarObjects,
   fetchMilvusHealth,
+  fetchEmbeddings3D,
 };
