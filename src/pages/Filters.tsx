@@ -193,13 +193,13 @@ export default function Filters() {
       let totalCountPromise: Promise<void> = Promise.resolve();
       if (startJd && endJd) {
         setTotalCountLoading(true);
-        totalCountPromise = fetchTotalAlertCount(survey, parseFloat(startJd), parseFloat(endJd), { [survey]: [1] })
+        totalCountPromise = api.fetchTotalAlertCount(survey, parseFloat(startJd), parseFloat(endJd), { [survey]: [1] })
           .then((c) => setTotalCount(c))
           .catch(() => setTotalCount(null))
           .finally(() => setTotalCountLoading(false));
       }
       const [data] = await Promise.all([
-        fetchFilterTest(params),
+        api.fetchFilterTest(params),
         totalCountPromise,
       ]);
       setQueryTimeMs(Math.round(performance.now() - t0));

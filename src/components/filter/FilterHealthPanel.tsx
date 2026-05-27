@@ -38,15 +38,17 @@ export function FilterHealthPanel({ matchedCount, totalCount, totalCountLoading,
 
   const throughputStatus = totalCountLoading
     ? "loading"
-    : passRate === null
-      ? "unavailable"
-      : matchedCount === 0
-        ? "none"
-        : passRate <= GOOD_THRESHOLD
-          ? "good"
-          : passRate <= WARN_THRESHOLD
-            ? "warn"
-            : "bad";
+    : totalCount === 0
+      ? "empty"
+      : passRate === null
+        ? "unavailable"
+        : matchedCount === 0
+          ? "none"
+          : passRate <= GOOD_THRESHOLD
+            ? "good"
+            : passRate <= WARN_THRESHOLD
+              ? "warn"
+              : "bad";
 
   // ─── Classification Breakdown ────────────────────────────────────
   const classChecks = [
@@ -106,6 +108,9 @@ export function FilterHealthPanel({ matchedCount, totalCount, totalCountLoading,
               <div className="h-4 w-4 rounded-full border-2 border-muted-foreground/30 border-t-primary animate-spin" />
             )}
             {throughputStatus === "unavailable" && (
+              <XCircle className="h-4 w-4 text-red-400" />
+            )}
+            {throughputStatus === "empty" && (
               <div className="h-4 w-4 rounded-full border-2 border-muted-foreground/30" />
             )}
             <span className="text-xs font-medium">Throughput</span>
@@ -147,9 +152,13 @@ export function FilterHealthPanel({ matchedCount, totalCount, totalCountLoading,
             </>
           ) : throughputStatus === "loading" ? (
             <p className="text-xs text-muted-foreground">Calculating total alert count...</p>
-          ) : (
+          ) : throughputStatus === "empty" ? (
             <p className="text-xs text-muted-foreground">
               No alerts present to filter from in the given JD timeframe.
+            </p>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Could not fetch alert count. The backend may be unreachable.
             </p>
           )}
         </div>
