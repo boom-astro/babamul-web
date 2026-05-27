@@ -10,8 +10,8 @@ import { AlertTriangle, CheckCircle, XCircle, Activity, BarChart3, Sparkles, Clo
 
 interface FilterHealthPanelProps {
   matchedCount: number;
-  totalCount: number | null; // null = unavailable (not requested or fetch failed)
-  totalCountLoading: boolean; // true = fetch in flight
+  totalCount: number | null;
+  totalCountLoading: boolean;
   results: Record<string, unknown>[];
   queryTimeMs?: number | null;
 }
