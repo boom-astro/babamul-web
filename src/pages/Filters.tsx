@@ -375,13 +375,6 @@ export default function Filters() {
                       No results yet. Write a pipeline and click "Run Filter" to see matching alerts.
                     </div>
                   )}
-
-                  {!loading && !error && results.length === 0 && countResult && (
-                    <div className="text-center text-muted-foreground py-8 text-sm">
-                      No alerts matched this filter
-                      {totalCount != null ? ` (0 of ${totalCount.toLocaleString()} scanned).` : "."}
-                    </div>
-                  )}
                 </TabsContent>
               </Tabs>
             </CardContent>

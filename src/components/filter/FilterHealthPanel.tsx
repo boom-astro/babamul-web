@@ -149,7 +149,7 @@ export function FilterHealthPanel({ matchedCount, totalCount, totalCountLoading,
             <p className="text-xs text-muted-foreground">Calculating total alert count...</p>
           ) : (
             <p className="text-xs text-muted-foreground">
-              Total alert count unavailable.
+              No alerts present to filter from in the given JD timeframe.
             </p>
           )}
         </div>
