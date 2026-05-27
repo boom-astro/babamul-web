@@ -492,7 +492,7 @@ export type FilterTestCountResult = {
 };
 
 export async function fetchFilterTestCount(params: FilterTestParams): Promise<FilterTestCountResult> {
-  const res = await fetch(`${BOOM_API_BASE}/filters/test/count`, {
+  const res = await fetch(`${SANDBOX_API_BASE}/filters/test/count`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(params),
@@ -506,7 +506,7 @@ export async function fetchFilterTestCount(params: FilterTestParams): Promise<Fi
 }
 
 export async function fetchFilterTest(params: FilterTestParams): Promise<Record<string, unknown>[]> {
-  const res = await fetch(`${BOOM_API_BASE}/filters/test`, {
+  const res = await fetch(`${SANDBOX_API_BASE}/filters/test`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(params),
@@ -522,7 +522,7 @@ export async function fetchFilterTest(params: FilterTestParams): Promise<Record<
 }
 
 export async function fetchBoomSchema(survey: string): Promise<AvroSchema> {
-  const url = `${BOOM_API_BASE}/filters/schemas/${encodeURIComponent(survey).toUpperCase()}`;
+  const url = `${SANDBOX_API_BASE}/filters/schemas/${encodeURIComponent(survey).toUpperCase()}`;
   const res = await fetch(url);
   if (!res.ok) {
     const txt = await res.text().catch(() => "");
@@ -566,6 +566,8 @@ export default {
   fetchObjCutouts,
   fetchStats,
   fetchCollectionStats,
+  fetchTopics,
+  fetchTotalAlertCount,
   fetchFilterTestCount,
   fetchFilterTest,
   fetchBoomSchema,

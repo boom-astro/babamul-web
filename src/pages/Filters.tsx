@@ -13,7 +13,7 @@ import type { FilterBuilderHandle } from "@/components/filter/FilterBuilder";
 import { FilterFieldBrowser } from "@/components/filter/FilterFieldBrowser";
 import { FilterHealthPanel } from "@/components/filter/FilterHealthPanel";
 import { flattenAvroSchema } from "@/lib/filterConstants";
-import { fetchFilterTestCount, fetchFilterTest, fetchBoomSchema, fetchTotalAlertCount, type FilterTestParams, type FilterTestCountResult, type AvroSchema } from "@/lib/api";
+import api, { type FilterTestParams, type FilterTestCountResult, type AvroSchema } from "@/lib/api";
 import { ZTF_FALLBACK_SCHEMA } from "@/lib/ztfFallbackSchema";
 
 const DEFAULT_PIPELINE = `[
@@ -133,7 +133,7 @@ export default function Filters() {
   useEffect(() => {
     let cancelled = false;
     setSchemaLoading(true);
-    fetchBoomSchema(survey)
+    api.fetchBoomSchema(survey)
       .then((s) => { if (!cancelled) setSchema(s); })
       .catch(() => {
         if (!cancelled) {
@@ -166,7 +166,7 @@ export default function Filters() {
     setError(null);
     setCountLoading(true);
     try {
-      const result = await fetchFilterTestCount(buildParams(pipeline));
+      const result = await api.fetchFilterTestCount(buildParams(pipeline));
       setCountResult(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Filter count failed");
