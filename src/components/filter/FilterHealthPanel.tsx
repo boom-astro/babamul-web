@@ -108,7 +108,7 @@ export function FilterHealthPanel({ matchedCount, totalCount, totalCountLoading,
               <div className="h-4 w-4 rounded-full border-2 border-muted-foreground/30 border-t-primary animate-spin" />
             )}
             {throughputStatus === "unavailable" && (
-              <XCircle className="h-4 w-4 text-red-400" />
+              <div className="h-4 w-4 rounded-full border-2 border-muted-foreground/30" />
             )}
             {throughputStatus === "empty" && (
               <div className="h-4 w-4 rounded-full border-2 border-muted-foreground/30" />
@@ -158,7 +158,7 @@ export function FilterHealthPanel({ matchedCount, totalCount, totalCountLoading,
             </p>
           ) : (
             <p className="text-xs text-muted-foreground">
-              Could not fetch alert count. The backend may be unreachable.
+              Total alert count unavailable.
             </p>
           )}
         </div>
