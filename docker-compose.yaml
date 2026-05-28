@@ -16,7 +16,6 @@ services:
         VITE_PRERELEASE_MODE: ${VITE_PRERELEASE_MODE:-false}
         VITE_PUBLIC_POSTHOG_KEY: ${VITE_PUBLIC_POSTHOG_KEY?Variable not set}
         VITE_PUBLIC_POSTHOG_HOST: ${VITE_PUBLIC_POSTHOG_HOST?Variable not set}
-        VITE_BOOM_NRP_API_URL: ${VITE_BOOM_NRP_API_URL:-https://boom-api.nrp-nautilus.io}
     environment:
       BOOM_API__DOMAIN: ${BOOM_API__DOMAIN:-api.${DOMAIN?Variable not set}}
       BOOM_SANDBOX_API__DOMAIN: ${BOOM_SANDBOX_API__DOMAIN:-${BOOM_API__DOMAIN:-api.${DOMAIN?Variable not set}}}
@@ -24,7 +23,6 @@ services:
       VITE_PRERELEASE_MODE: ${VITE_PRERELEASE_MODE:-false}
       VITE_PUBLIC_POSTHOG_KEY: ${VITE_PUBLIC_POSTHOG_KEY?Variable not set}
       VITE_PUBLIC_POSTHOG_HOST: ${VITE_PUBLIC_POSTHOG_HOST?Variable not set}
-      VITE_BOOM_NRP_API_URL: ${VITE_BOOM_NRP_API_URL:-https://boom-api.nrp-nautilus.io}
     restart: always
     networks:
       - traefik-public

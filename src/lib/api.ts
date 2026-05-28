@@ -1,10 +1,8 @@
 // Always use the same-origin proxy; production should map /api to the backend via the web server
 const API_BASE = "/api/babamul";
-// BOOM main API base URL for filter testing (public endpoints)
 // Production should map /api-sandbox to the filter sandbox backend via the web server.
 // these are only used in the filter testing UI and should not require auth.
 const SANDBOX_API_BASE = "/api-sandbox";
-
 
 export type TokenRecord = {
   access_token: string;
