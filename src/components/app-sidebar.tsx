@@ -5,6 +5,7 @@ import {
   IconDatabase,
   IconHelp,
   IconSearch,
+  IconMapPin,
   IconBinaryTree,
   IconPackage,
   IconNotebook,
@@ -32,6 +33,11 @@ const data = {
       title: "Query",
       url: "/query",
       icon: IconSearch,
+    },
+    {
+      title: "Skymap Search",
+      url: "/skymap",
+      icon: IconMapPin,
     },
     {
       title: "Dashboard",

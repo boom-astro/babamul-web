@@ -10,6 +10,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { Loader } from "@/components/ui/loader";
 
 const Query = lazy(() => import("@/pages/Query"));
+const SkymapSearch = lazy(() => import("@/pages/SkymapSearch"));
 const ApiDocs = lazy(() => import("@/pages/ApiDocs"));
 const KafkaDocs = lazy(() => import("@/pages/KafkaDocs"));
 const KafkaAccessGuide = lazy(() => import("@/pages/KafkaAccessGuide"));
@@ -103,6 +104,7 @@ function LayoutRoutes() {
                   {!PRERELEASE_MODE && <Route path="/signup" element={<SignupPage />} />}
                   {!PRERELEASE_MODE && <Route path="/activate" element={<SignupPage />} />}
                   <Route path="/query" element={<ProtectedRoute><Query /></ProtectedRoute>} />
+                  <Route path="/skymap" element={<ProtectedRoute><SkymapSearch /></ProtectedRoute>} />
                   <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/docs/kafka" element={<KafkaDocs />} />

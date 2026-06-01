@@ -326,6 +326,75 @@ export async function fetchAlerts(survey: string, params: AlertSearchParams): Pr
   return Array.isArray(result) ? (result as Alert[]) : [];
 }
 
+// Parameters for the MOC / skymap spatial alert search.
+// Exactly one of `moc_fits_base64` or `skymap_fits_base64` must be provided.
+export type MocSearchParams = {
+  moc_fits_base64?: string;
+  skymap_fits_base64?: string;
+  credible_level?: number; // only used with skymap_fits_base64 (defaults to 0.9 server-side)
+  start_jd: number;
+  end_jd: number; // window must be <= 7 days after start_jd
+  min_magpsf?: number;
+  max_magpsf?: number;
+  min_drb?: number;
+  max_drb?: number;
+  is_rock?: boolean;
+  is_star?: boolean;
+  is_near_brightstar?: boolean;
+  is_stationary?: boolean;
+  limit?: number; // max 10000
+};
+
+// Aladin MOC JSON: an object mapping each HEALPix order (as a string) to its
+// cell indices, e.g. `{"9":[123,124,...]}`. Produced server-side from the
+// queried region (skymap thresholded at the credible level, or the MOC file)
+// and drawn by the client via `A.MOCFromJSON`.
+export type AladinMocJson = Record<string, number[]>;
+
+export type MocSearchResult = {
+  alerts: Alert[];
+  // The queried sky region as Aladin MOC JSON, or null if the server didn't
+  // return one (e.g. an older backend that responded with a bare alert array).
+  moc: AladinMocJson | null;
+};
+
+// Query alerts contained within a HEALPix MOC / skymap region and a JD time
+// window. Returns both the matched alerts and the queried region (so the client
+// can draw the exact searched footprint).
+export async function mocSearchAlerts(survey: string, params: MocSearchParams): Promise<MocSearchResult> {
+  const url = `${API_BASE}/surveys/${encodeURIComponent(survey)}/alerts/moc-search`;
+  const res = await fetchWithAuth(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(params),
+  });
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    let msg = txt;
+    try {
+      const j = JSON.parse(txt);
+      if (j && typeof j === "object" && "message" in j && typeof j.message === "string") msg = j.message;
+    } catch {
+      // keep raw text
+    }
+    throw new Error(`MOC search failed: ${res.status} ${msg}`);
+  }
+  const body = await parseResponseJson(res).catch(() => ({ data: [] }));
+  const result = unwrapData<unknown>(body, []);
+  // New backend: { alerts, moc }. Legacy backend: a bare alert array.
+  if (Array.isArray(result)) {
+    return { alerts: result as Alert[], moc: null };
+  }
+  if (result && typeof result === "object") {
+    const obj = result as { alerts?: unknown; moc?: unknown };
+    return {
+      alerts: Array.isArray(obj.alerts) ? (obj.alerts as Alert[]) : [],
+      moc: obj.moc && typeof obj.moc === "object" ? (obj.moc as AladinMocJson) : null,
+    };
+  }
+  return { alerts: [], moc: null };
+}
+
 export async function fetchAlertCutouts(survey: string, candid: string): Promise<Cutouts> {
   const url = `${API_BASE}/surveys/${encodeURIComponent(survey)}/cutouts?candid=${encodeURIComponent(`${candid}`)}`;
   const res = await fetchWithAuth(url);
@@ -481,6 +550,7 @@ export default {
   fetchObject,
   fetchProfile,
   fetchAlerts,
+  mocSearchAlerts,
   fetchAlertCutouts,
   fetchObjCutouts,
   fetchStats,
