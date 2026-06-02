@@ -102,17 +102,7 @@ function friendlyError(err: unknown, fallback: string): string {
   const statusMatch = raw.match(/:\s*(\d{3})\s*(.*)$/);
   if (statusMatch) {
     const status = parseInt(statusMatch[1], 10);
-    let body = statusMatch[2].trim();
-    try {
-      const parsed = JSON.parse(body);
-      if (parsed && typeof parsed.message === "string") body = parsed.message;
-    } catch { /* swallow JSON parsing syntax error */ }
-    if (status >= 400 && status < 500) {
-      return `Bad request (${status}). ${body || "Check the pipeline and parameters."}`;
-    }
-    if (status >= 500) {
-      return `Server error (${status}). ${body || "The backend hit an internal error."}`;
-    }
+    return `Error status code: ${status}`;
   }
   return raw || fallback;
 }
