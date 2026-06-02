@@ -156,6 +156,10 @@ export default function Filters() {
   const [countLoading, setCountLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    setCountResult(null);
+  }, [pipelineText, startJd, endJd, survey, limit]);
+
   // Load schema on mount and survey change (falls back to hardcoded schema)
   useEffect(() => {
     let cancelled = false;
