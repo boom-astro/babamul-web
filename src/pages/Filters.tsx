@@ -96,26 +96,13 @@ function flattenObject(obj: Record<string, unknown>, prefix = ""): Record<string
 
 function friendlyError(err: unknown, fallback: string): string {
   if (err instanceof TypeError) {
-    return "Backend unreachable. Check that the server is running and try again.";
+    return "Backend unreachable.";
   }
   const raw = err instanceof Error ? err.message : "";
   const statusMatch = raw.match(/:\s*(\d{3})\s*(.*)$/);
   if (statusMatch) {
     const status = parseInt(statusMatch[1], 10);
-    let body = statusMatch[2].trim();
-    try {
-      const parsed = JSON.parse(body);
-      if (parsed && typeof parsed.message === "string") body = parsed.message;
-    } catch { /* swallow JSON parsing syntax error */ }
-    if (/connection refused|no available servers|server selection timeout/i.test(body)) {
-      return "Database unreachable. The backend can't connect to MongoDB — check that the database is running.";
-    }
-    if (status >= 400 && status < 500) {
-      return `Bad request (${status}). ${body || "Check the pipeline and parameters."}`;
-    }
-    if (status >= 500) {
-      return `Server error (${status}). ${body || "The backend hit an internal error."}`;
-    }
+    return `Error status code: ${status}`;
   }
   return raw || fallback;
 }
