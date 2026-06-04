@@ -338,6 +338,16 @@ export default function Dashboard() {
         </CardContent>
       </Card>
 
+      // working here 6/4 --> Sanjeev Sridhar
+      <Card>
+        <CardHeader>
+          <CardTitle>Real-Time Alerts for {todayUTC} </CardTitle>
+
+          
+        </CardHeader>
+      
+      </Card>
+      
       <Card>
         <CardHeader>
           <CardTitle>Alert Counts by Kafka Topic</CardTitle>
