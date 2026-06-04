@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AlertTriangle } from "lucide-react";
 import { FilterBuilder } from "@/components/filter/FilterBuilder";
 import type { FilterBuilderHandle } from "@/components/filter/FilterBuilder";
 import { FilterFieldBrowser } from "@/components/filter/FilterFieldBrowser";
@@ -93,6 +94,19 @@ function flattenObject(obj: Record<string, unknown>, prefix = ""): Record<string
   return result;
 }
 
+function friendlyError(err: unknown, fallback: string): string {
+  if (err instanceof TypeError) {
+    return "Backend unreachable.";
+  }
+  const raw = err instanceof Error ? err.message : "";
+  const statusMatch = raw.match(/:\s*(\d{3})\s*(.*)$/);
+  if (statusMatch) {
+    const status = parseInt(statusMatch[1], 10);
+    return `Error status code: ${status}`;
+  }
+  return raw || fallback;
+}
+
 export default function Filters() {
   const [activeTab, setActiveTab] = useState<"editor" | "results">("editor");
   const [survey, setSurvey] = useState<"ZTF" | "LSST">("ZTF");
@@ -121,6 +135,7 @@ export default function Filters() {
 
   // Results state
   const [countResult, setCountResult] = useState<FilterTestCountResult | null>(null);
+  const [totalCountLoading, setTotalCountLoading] = useState(false);
   const [totalCount, setTotalCount] = useState<number | null>(null);
   const [queryTimeMs, setQueryTimeMs] = useState<number | null>(null);
   const [results, setResults] = useState<Record<string, unknown>[]>([]);
@@ -168,7 +183,7 @@ export default function Filters() {
       const result = await api.fetchFilterTestCount(buildParams(pipeline));
       setCountResult(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Filter count failed");
+      setError(friendlyError(err, "Filter count failed"));
     } finally {
       setCountLoading(false);
     }
@@ -189,14 +204,17 @@ export default function Filters() {
     try {
       const params = buildParams(pipeline);
       // Fire both requests in parallel: filter results + total count
+      let totalCountPromise: Promise<void> = Promise.resolve();
+      if (startJd && endJd) {
+        setTotalCountLoading(true);
+        totalCountPromise = api.fetchTotalAlertCount(survey, parseFloat(startJd), parseFloat(endJd), { [survey]: [1] })
+          .then((c) => setTotalCount(c))
+          .catch(() => setTotalCount(null))
+          .finally(() => setTotalCountLoading(false));
+      }
       const [data] = await Promise.all([
         api.fetchFilterTest(params),
-        // Total count for health panel (fire and forget into state)
-        (startJd && endJd
-          ? api.fetchTotalAlertCount(survey, parseFloat(startJd), parseFloat(endJd), { [survey]: [1] })
-              .then((c) => setTotalCount(c))
-              .catch(() => setTotalCount(null))
-          : Promise.resolve()),
+        totalCountPromise,
       ]);
       setQueryTimeMs(Math.round(performance.now() - t0));
       setResults(data);
@@ -206,7 +224,7 @@ export default function Filters() {
       }
       setActiveTab("results");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Filter test failed");
+      setError(friendlyError(err, "Filter test failed"));
     } finally {
       setLoading(false);
     }
@@ -322,7 +340,10 @@ export default function Filters() {
                   )}
 
                   {!loading && error && (
-                    <div className="text-red-500 text-sm">{error}</div>
+                    <div className="flex items-start gap-2 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-400">
+                      <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+                      <span>{error}</span>
+                    </div>
                   )}
 
                   {/* Filter Health Panel — shown after results are available */}
@@ -331,6 +352,7 @@ export default function Filters() {
                       <FilterHealthPanel
                         matchedCount={countResult?.count ?? results.length}
                         totalCount={totalCount}
+                        totalCountLoading={totalCountLoading}
                         results={results}
                         queryTimeMs={queryTimeMs}
                       />

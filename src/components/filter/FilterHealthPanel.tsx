@@ -10,7 +10,8 @@ import { AlertTriangle, CheckCircle, XCircle, Activity, BarChart3, Sparkles, Clo
 
 interface FilterHealthPanelProps {
   matchedCount: number;
-  totalCount: number | null; // null = still loading
+  totalCount: number | null;
+  totalCountLoading: boolean;
   results: Record<string, unknown>[];
   queryTimeMs?: number | null;
 }
@@ -29,19 +30,25 @@ function getNestedValue(obj: Record<string, unknown>, path: string): unknown {
   return current;
 }
 
-export function FilterHealthPanel({ matchedCount, totalCount, results, queryTimeMs }: FilterHealthPanelProps) {
+export function FilterHealthPanel({ matchedCount, totalCount, totalCountLoading, results, queryTimeMs }: FilterHealthPanelProps) {
   // ─── Throughput ─────────────────────────────────────────────────
   const passRate = totalCount && totalCount > 0
     ? (matchedCount / totalCount) * 100
     : null;
 
-  const throughputStatus = passRate === null
+  const throughputStatus = totalCountLoading
     ? "loading"
-    : passRate <= GOOD_THRESHOLD
-      ? "good"
-      : passRate <= WARN_THRESHOLD
-        ? "warn"
-        : "bad";
+    : totalCount === 0
+      ? "empty"
+      : passRate === null
+        ? "unavailable"
+        : matchedCount === 0
+          ? "none"
+          : passRate <= GOOD_THRESHOLD
+            ? "good"
+            : passRate <= WARN_THRESHOLD
+              ? "warn"
+              : "bad";
 
   // ─── Classification Breakdown ────────────────────────────────────
   const classChecks = [
@@ -96,8 +103,15 @@ export function FilterHealthPanel({ matchedCount, totalCount, results, queryTime
             {throughputStatus === "good" && <CheckCircle className="h-4 w-4 text-emerald-400" />}
             {throughputStatus === "warn" && <AlertTriangle className="h-4 w-4 text-amber-400" />}
             {throughputStatus === "bad" && <XCircle className="h-4 w-4 text-red-400" />}
+            {throughputStatus === "none" && <AlertTriangle className="h-4 w-4 text-amber-400" />}
             {throughputStatus === "loading" && (
               <div className="h-4 w-4 rounded-full border-2 border-muted-foreground/30 border-t-primary animate-spin" />
+            )}
+            {throughputStatus === "unavailable" && (
+              <div className="h-4 w-4 rounded-full border-2 border-muted-foreground/30" />
+            )}
+            {throughputStatus === "empty" && (
+              <div className="h-4 w-4 rounded-full border-2 border-muted-foreground/30" />
             )}
             <span className="text-xs font-medium">Throughput</span>
           </div>
@@ -112,28 +126,40 @@ export function FilterHealthPanel({ matchedCount, totalCount, results, queryTime
                   → {passRate.toFixed(1)}%
                 </span>
               </div>
-              <div className="w-full bg-secondary rounded-full h-2 mt-1.5 overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all duration-500 ${
-                    throughputStatus === "good"
-                      ? "bg-emerald-500"
-                      : throughputStatus === "warn"
-                        ? "bg-amber-500"
-                        : "bg-red-500"
-                  }`}
-                  style={{ width: `${Math.min(passRate, 100)}%` }}
-                />
-              </div>
+              {throughputStatus !== "none" && (
+                <div className="w-full bg-secondary rounded-full h-2 mt-1.5 overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${
+                      throughputStatus === "good"
+                        ? "bg-emerald-500"
+                        : throughputStatus === "warn"
+                          ? "bg-amber-500"
+                          : "bg-red-500"
+                    }`}
+                    style={{ width: `${Math.min(passRate, 100)}%` }}
+                  />
+                </div>
+              )}
               <p className="text-[10px] text-muted-foreground mt-1">
-                {throughputStatus === "good"
-                  ? `Under ${GOOD_THRESHOLD}% — filter is selective enough for activation.`
-                  : throughputStatus === "warn"
-                    ? `Between ${GOOD_THRESHOLD}–${WARN_THRESHOLD}% — consider adding more conditions.`
-                    : `Over ${WARN_THRESHOLD}% — filter is too broad. It would be rejected on activation.`}
+                {throughputStatus === "none"
+                  ? "No matches. The filter may be too restrictive, or no alerts in this window pass its conditions."
+                  : throughputStatus === "good"
+                    ? `Under ${GOOD_THRESHOLD}% — filter is selective enough for activation.`
+                    : throughputStatus === "warn"
+                      ? `Between ${GOOD_THRESHOLD}–${WARN_THRESHOLD}% — consider adding more conditions.`
+                      : `Over ${WARN_THRESHOLD}% — filter is too broad. It would be rejected on activation.`}
               </p>
             </>
-          ) : (
+          ) : throughputStatus === "loading" ? (
             <p className="text-xs text-muted-foreground">Calculating total alert count...</p>
+          ) : throughputStatus === "empty" ? (
+            <p className="text-xs text-muted-foreground">
+              No alerts present to filter from in the given JD timeframe.
+            </p>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Total alert count unavailable.
+            </p>
           )}
         </div>
 
