@@ -338,15 +338,25 @@ export default function Dashboard() {
         </CardContent>
       </Card>
 
-      // working here 6/4 --> Sanjeev Sridhar
+      // ADDED BY SANJEEV - 6/4
       <Card>
         <CardHeader>
           <CardTitle>Real-Time Alerts for {todayUTC} </CardTitle>
-
+          
           
         </CardHeader>
-      
-      </Card>
+        
+        
+        <CardContent>
+        <Plot
+            type="line"
+            // TODO: update with Prometheus data
+            // data={chartData}
+            xKey="month"
+            yKey="revenue"
+        />
+    </CardContent>
+    </Card>
       
       <Card>
         <CardHeader>
