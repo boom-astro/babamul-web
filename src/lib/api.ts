@@ -1,6 +1,5 @@
 // Always use the same-origin proxy; production should map /api to the backend via the web server
 const API_BASE = "/api/babamul";
-const PROMETHEUS_BASE = "/utils"
 
 export type TokenRecord = {
   access_token: string;
@@ -411,17 +410,17 @@ export async function fetchTopics(): Promise<TopicInfo[]> {
 }
 
 export async function fetchRealtimeAlerts(): Promise<RealtimeAlertMetrics[]> {
-  const url = '${PROMETHEUS_BASE}/o11y/metrics`;
+  const url = `${API_BASE}/stats/kafka`;
   const res = await fetch(url); 
 
   if(!res.ok) {
-    const txt = await rest.text().catch(() => "");
+    const txt = await res.text().catch(() => "");
     throw new Error(`Fetch topics failed: ${res.status} ${txt}`);
   }
 
   const body = await parseResponseJson(res).catch(() => ({ data: [] } ));
   const result = unwrapData<unknown>(body, []);
-  return Array.isArray(result) ? (result as RealtimeAlertMetrics[]);
+  return Array.isArray(result) ? (result as RealtimeAlertMetrics[]) : [];
 }
 
 export type CollectionEntry = {
