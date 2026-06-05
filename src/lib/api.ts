@@ -402,6 +402,11 @@ export async function fetchTopics(): Promise<TopicInfo[]> {
   return Array.isArray(result) ? (result as TopicInfo[]) : [];
 }
 
+export async function fetchPrometheus() = async() => {
+  const response = await fetch('http://localhost:4317/metrics');
+  return response.json();
+}
+
 export type CollectionEntry = {
   name: string;
   count?: number;
