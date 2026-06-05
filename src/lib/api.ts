@@ -1,5 +1,6 @@
 // Always use the same-origin proxy; production should map /api to the backend via the web server
 const API_BASE = "/api/babamul";
+const PROMETHEUS_BASE = "/utils"
 
 export type TokenRecord = {
   access_token: string;
@@ -376,6 +377,13 @@ export type TopicInfo = {
   retention_days: number;
 };
 
+export type RealtimeAlertMetrics = {
+  survey: string;
+  alert_count: number;
+  alerts_per_second: number;
+  last_updated: number; // in ms
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type AvroSchema = Record<string, any>;
 
@@ -402,9 +410,18 @@ export async function fetchTopics(): Promise<TopicInfo[]> {
   return Array.isArray(result) ? (result as TopicInfo[]) : [];
 }
 
-export async function fetchPrometheus() = async() => {
-  const response = await fetch('http://localhost:4317/metrics');
-  return response.json();
+export async function fetchRealtimeAlerts(): Promise<RealtimeAlertMetrics[]> {
+  const url = '${PROMETHEUS_BASE}/o11y/metrics`;
+  const res = await fetch(url); 
+
+  if(!res.ok) {
+    const txt = await rest.text().catch(() => "");
+    throw new Error(`Fetch topics failed: ${res.status} ${txt}`);
+  }
+
+  const body = await parseResponseJson(res).catch(() => ({ data: [] } ));
+  const result = unwrapData<unknown>(body, []);
+  return Array.isArray(result) ? (result as RealtimeAlertMetrics[]);
 }
 
 export type CollectionEntry = {
