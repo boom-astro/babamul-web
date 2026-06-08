@@ -1,5 +1,6 @@
 // Always use the same-origin proxy; production should map /api to the backend via the web server
 const API_BASE = "/api/babamul";
+const METRICS_BASE = "/utils/o11y/";
 
 export type TokenRecord = {
   access_token: string;
@@ -356,6 +357,8 @@ export type NightlyStat = {
   lsst?: number;
 };
 
+
+// CURRENT FUNCTION FOR GATHERING AGGREGATE STATISTICS
 export async function fetchStats(startDate: string, endDate: string, survey?: string): Promise<NightlyStat[]> {
   const params = new URLSearchParams({ start_date: startDate, end_date: endDate });
   if (survey) params.set("survey", survey);
@@ -368,7 +371,7 @@ export async function fetchStats(startDate: string, endDate: string, survey?: st
   const body = await parseResponseJson(res).catch(() => ({ data: [] }));
   const result = unwrapData<unknown>(body, []);
   return Array.isArray(result) ? (result as NightlyStat[]) : [];
-}
+};
 
 export type TopicInfo = {
   name: string;
@@ -376,12 +379,12 @@ export type TopicInfo = {
   retention_days: number;
 };
 
+// KEEPS TRACK OF SURVEY + NUM OF ALERTS (AS DEFINED ON 6/5)
 export type RealtimeAlertMetrics = {
   survey: string;
-  alert_count: number;
-  alerts_per_second: number;
-  last_updated: number; // in ms
-}
+  n_alerts: number; 
+  // don't need to worry about last time since update bc OTel updates every 60s
+};
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type AvroSchema = Record<string, any>;
@@ -409,19 +412,18 @@ export async function fetchTopics(): Promise<TopicInfo[]> {
   return Array.isArray(result) ? (result as TopicInfo[]) : [];
 }
 
-export async function fetchRealtimeAlerts(): Promise<RealtimeAlertMetrics[]> {
-  const url = `${API_BASE}/stats/kafka`;
-  const res = await fetch(url); 
-
-  if(!res.ok) {
+// TODO: find path for OTel to access via GET or implement another way
+export async function fetchRealtimeAlerts(): Promise:<RealtimeAlertMetrics[]> {
+  const url = ``; //path for OTel
+  const res = await fetch(url);
+  if (!res.ok){
     const txt = await res.text().catch(() => "");
-    throw new Error(`Fetch topics failed: ${res.status} ${txt}`);
+    throw new Error(`Fetch topics failed: $(res.status} ${txt}`);
   }
-
-  const body = await parseResponseJson(res).catch(() => ({ data: [] } ));
+  const body = await parseResponseJson(res).catch(() => ({data: [] }));
   const result = unwrapData<unknown>(body, []);
-  return Array.isArray(result) ? (result as RealtimeAlertMetrics[]) : [];
-}
+  return Array.isArray(result) ? (result as RealtimeAlertMetrics[]): [];
+};
 
 export type CollectionEntry = {
   name: string;
