@@ -175,6 +175,15 @@ export default function Filters() {
     return params;
   }
 
+  function fetchTotalForWindow(): Promise<void> {
+    if (!startJd || !endJd) return Promise.resolve();
+    setTotalCountLoading(true);
+    return api.fetchTotalAlertCount(survey, parseFloat(startJd), parseFloat(endJd), { [survey]: [1] })
+      .then((c) => setTotalCount(c))
+      .catch(() => setTotalCount(null))
+      .finally(() => setTotalCountLoading(false));
+  }
+
   async function handleCount() {
     const { valid, error: validationError, pipeline } = validatePipeline(pipelineText);
     if (!valid || !pipeline) {
@@ -183,8 +192,12 @@ export default function Filters() {
     }
     setError(null);
     setCountLoading(true);
+    setTotalCount(null);
     try {
-      const result = await api.fetchFilterTestCount(buildParams(pipeline));
+      const [result] = await Promise.all([
+        api.fetchFilterTestCount(buildParams(pipeline)),
+        fetchTotalForWindow(),
+      ]);
       setCountResult(result);
     } catch (err) {
       setError(friendlyError(err, "Filter count failed"));
@@ -208,17 +221,9 @@ export default function Filters() {
     try {
       const params = buildParams(pipeline);
       // Fire both requests in parallel: filter results + total count
-      let totalCountPromise: Promise<void> = Promise.resolve();
-      if (startJd && endJd) {
-        setTotalCountLoading(true);
-        totalCountPromise = api.fetchTotalAlertCount(survey, parseFloat(startJd), parseFloat(endJd), { [survey]: [1] })
-          .then((c) => setTotalCount(c))
-          .catch(() => setTotalCount(null))
-          .finally(() => setTotalCountLoading(false));
-      }
       const [data] = await Promise.all([
         api.fetchFilterTest(params),
-        totalCountPromise,
+        fetchTotalForWindow(),
       ]);
       setQueryTimeMs(Math.round(performance.now() - t0));
       setResults(data);
