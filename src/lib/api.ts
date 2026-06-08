@@ -412,18 +412,20 @@ export async function fetchTopics(): Promise<TopicInfo[]> {
   return Array.isArray(result) ? (result as TopicInfo[]) : [];
 }
 
-// TODO: find path for OTel to access via GET or implement another way
-export async function fetchRealtimeAlerts(): Promise:<RealtimeAlertMetrics[]> {
-  const url = ``; //path for OTel
+// Fetch realtime alert metrics from the backend stats/kafka handler.
+// The backend queries OTel metrics and returns them as JSON.
+// See: api/babamul/stats/kafka.rs
+export async function fetchRealtimeAlerts(): Promise<RealtimeAlertMetrics[]> {
+  const url = `${API_BASE}/stats/realtime-alerts`;
   const res = await fetch(url);
-  if (!res.ok){
+  if (!res.ok) {
     const txt = await res.text().catch(() => "");
-    throw new Error(`Fetch topics failed: $(res.status} ${txt}`);
+    throw new Error(`Fetch realtime alerts failed: ${res.status} ${txt}`);
   }
-  const body = await parseResponseJson(res).catch(() => ({data: [] }));
+  const body = await parseResponseJson(res).catch(() => ({ data: [] }));
   const result = unwrapData<unknown>(body, []);
-  return Array.isArray(result) ? (result as RealtimeAlertMetrics[]): [];
-};
+  return Array.isArray(result) ? (result as RealtimeAlertMetrics[]) : [];
+}
 
 export type CollectionEntry = {
   name: string;
