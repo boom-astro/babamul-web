@@ -1,6 +1,5 @@
 // Always use the same-origin proxy; production should map /api to the backend via the web server
 const API_BASE = "/api/babamul";
-const METRICS_BASE = "/utils/o11y/";
 
 export type TokenRecord = {
   access_token: string;
@@ -416,7 +415,7 @@ export async function fetchTopics(): Promise<TopicInfo[]> {
 // The backend queries OTel metrics and returns them as JSON.
 // See: api/babamul/stats/kafka.rs
 export async function fetchRealtimeAlerts(): Promise<RealtimeAlertMetrics[]> {
-  const url = `${API_BASE}/stats/realtime-alerts`;
+  const url = `${API_BASE}/stats/kafka`;
   const res = await fetch(url);
   if (!res.ok) {
     const txt = await res.text().catch(() => "");
