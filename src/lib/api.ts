@@ -1,5 +1,6 @@
 // Always use the same-origin proxy; production should map /api to the backend via the web server
 const API_BASE = "/api/babamul";
+const METRICS_BASE = "/utils/o11y/";
 
 export type TokenRecord = {
   access_token: string;
@@ -378,11 +379,11 @@ export type TopicInfo = {
   retention_days: number;
 };
 
-// KEEPS TRACK OF SURVEY + NUM OF ALERTS (AS DEFINED ON 6/5)
+// KEEPS TRACK OF SURVEY + NUM OF ALERTS WITH TIMESTAMP WHEN GATHERED
 export type RealtimeAlertMetrics = {
   survey: string;
-  n_alerts: number; 
-  // don't need to worry about last time since update bc OTel updates every 60s
+  n_alerts: number;
+  gathered_at: number; // unix timestamp in seconds
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -412,7 +413,7 @@ export async function fetchTopics(): Promise<TopicInfo[]> {
 }
 
 // Fetch realtime alert metrics from the backend stats/kafka handler.
-// The backend queries OTel metrics and returns them as JSON.
+// The backend queries OTel metrics and returns them as JSON with gathered timestamp.
 // See: api/babamul/stats/kafka.rs
 export async function fetchRealtimeAlerts(): Promise<RealtimeAlertMetrics[]> {
   const url = `${API_BASE}/stats/kafka`;
