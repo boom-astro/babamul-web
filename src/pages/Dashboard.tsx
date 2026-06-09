@@ -180,10 +180,6 @@ export default function Dashboard() {
     alerts_cutouts: "alert cutouts",
   };
 
-  const realtimeAlerts = // figure out how to query database
-  
-  const getRealtimeData = ( // will assign stuff to variables
-
   function parseAlertCollection(name: string): { survey: string; type: string } {
     const m = name.match(/^(ZTF|LSST)_(.+)$/);
     if (!m) return { survey: "", type: name };
@@ -366,18 +362,19 @@ export default function Dashboard() {
         <CardContent>
         <Plot // updated to reflect multiple sources of input (for each survey) 
             type="line"
-            data={chartData} // also need to config this
+            data={realtimeAlerts}
             series={[
                 {
-                    dataKey: "revenue", // need to config this as a function
+                    dataKey: "ztf", // need to config this as a function
                     label: "ZTF"
                 },
                 {
-                    dataKey: "expenses", // need to config this as a function
+                    dataKey: "lsst", // need to config this as a function
                     label: "LSST"
                 }
             ]}
             xKey="Time"
+            yKey="Alerts"
         />
     </CardContent>
     </Card>
