@@ -7,7 +7,7 @@ import { Toggle } from "@/components/ui/toggle";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { IconZoomReset } from "@tabler/icons-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import api, { CollectionEntry, fetchTopics, NightlyStat, type TopicInfo } from "@/lib/api";
+import api, { CollectionEntry, fetchTopics, fetchRealtimeAlerts, NightlyStat, type TopicInfo, type RealtimeAlertMetrics } from "@/lib/api";
 import { SURVEYS, type Survey } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch.tsx";
 import { Label } from "@/components/ui/label.tsx";
@@ -56,6 +56,11 @@ export default function Dashboard() {
   const [topicsLoading, setTopicsLoading] = useState(true);
   const [topicsError, setTopicsError] = useState<string | null>(null);
 
+  // Realtime alerts state
+  const [realtimeAlerts, setRealtimeAlerts] = useState<RealtimeAlertMetrics[]>([]);
+  const [rtaLoading, setRtaLoading] = useState(true);
+  const [rtaError, setRtaError] = useState<string | null>(null);
+
   // Zoom: drag-select on chart to zoom, double-click to reset
   const [zoomLeft, setZoomLeft] = useState<string | null>(null);
   const [zoomRight, setZoomRight] = useState<string | null>(null);
@@ -94,6 +99,13 @@ export default function Dashboard() {
       .then(setTopics)
       .catch((e) => setTopicsError(e instanceof Error ? e.message : "Failed to fetch topics"))
       .finally(() => setTopicsLoading(false));
+  }, []);
+
+  useEffect(() => {
+    fetchRealtimeAlerts()
+    .then(setRealtimeAlerts)
+    .catch((e) => setRtaError(e instanceof Error ? e.message : "Failed to fetch realtime alerts"))
+    .finally(() => setRtaLoading(false));
   }, []);
 
   const visibleData = useMemo(() => {
