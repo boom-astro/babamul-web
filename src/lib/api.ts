@@ -1,6 +1,5 @@
 // Always use the same-origin proxy; production should map /api to the backend via the web server
 const API_BASE = "/api/babamul";
-const METRICS_BASE = "/utils/o11y/";
 
 export type TokenRecord = {
   access_token: string;
