@@ -385,14 +385,32 @@ export default function Dashboard() {
       <Card>
         <CardHeader>
           <CardTitle>Real-Time Alerts for {todayUTC} </CardTitle>
-          
-          
         </CardHeader>
         
         
         <CardContent>
           <ChartContainer config={{}}>
             <LineChart data={realtimeChartData}>
+              <CartesianGrid strokeDasharray="3 3" />
+
+              // TODO: config these with labels
+              <XAxis dataKey = "time" />
+              <YAxis />
+
+              <ChartTooltip />
+
+              <Line
+                type="monotone"
+                dataKey="ztf"
+                name="ZTF"
+              />
+
+              <Line 
+                  type="monotone"
+                  dataKey="lsst"
+                  name="LSST"
+              />
+              
             </LineChart>
           </ChartContainer>
         </CardContent>
