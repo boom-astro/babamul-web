@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Bar, BarChart, CartesianGrid, ReferenceArea, XAxis, YAxis } from "recharts";
+import { Line, LineChart, Bar, BarChart, CartesianGrid, ReferenceArea, XAxis, YAxis } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { Toggle } from "@/components/ui/toggle";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
@@ -12,7 +12,6 @@ import { SURVEYS, type Survey } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch.tsx";
 import { Label } from "@/components/ui/label.tsx";
 import KafkaAlertCounts from "@/components/kafka/KafkaAlertCounts.tsx";
-import Plot from "react-plotly.js";
 
 const SURVEY_COLORS: Record<string, string> = {
   ztf: "var(--chart-1)",
@@ -109,11 +108,36 @@ export default function Dashboard() {
     .finally(() => setRtaLoading(false));
   }, []);
 
+  // gathering realtime data
   const realtimeChartData = useMemo(() => {
-    if (!rtaLoading) return realtimeAlerts;
-    return realtimeAlerts;
+    const grouped = new Map<
+      number,
+      {
+        time: string;
+        ztf?: number;
+        lsst?: number;
+      }
+    >();
+
+    realtimeChartData.forEach((row) => {
+      if (!grouped.has(row.gathered_at)) {
+        grouped.set(row.gathered_at, {
+          time: new Date(row.gathered_at * 1000).toLocaleTimeString(),
+        });
+      }
+    });
+
+    const point = grouped.get(row.gathered_at)!;
+
+    point[row.survey.toLowerCase() as "ztf" | "lsst"] = 
+      row.n_alerts;
+ 
+
+  return Array.from(grouped.entries())
+    .sort(([a], [b]) => a - b)
+    .map(([, value]) => value);
+}, [realtimeChartData]);
     
-  }, [realtimeAlerts]);
 
   const visibleData = useMemo(() => {
     if (surveys.has("ztf") && surveys.has("lsst")) return statsData;
@@ -367,23 +391,11 @@ export default function Dashboard() {
         
         
         <CardContent>
-        <Plot // updated to reflect multiple sources of input (for each survey) 
-            type="line"
-            data={realtimeChartData}
-            series={[
-                {
-                    dataKey: "ztf", // need to config this as a function
-                    label: "ZTF"
-                },
-                {
-                    dataKey: "lsst", // need to config this as a function
-                    label: "LSST"
-                }
-            ]}
-            xKey="Time"
-            yKey="Alerts"
-        />
-    </CardContent>
+          <ChartContainer config={{}}>
+            <LineChart data={realtimeChartData}>
+            </LineChart>
+          </ChartContainer>
+        </CardContent>
     </Card>
       
       <Card>
