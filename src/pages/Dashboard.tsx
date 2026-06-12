@@ -12,6 +12,7 @@ import { SURVEYS, type Survey } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch.tsx";
 import { Label } from "@/components/ui/label.tsx";
 import KafkaAlertCounts from "@/components/kafka/KafkaAlertCounts.tsx";
+import Plot from "react-plotly.js";
 
 const SURVEY_COLORS: Record<string, string> = {
   ztf: "var(--chart-1)",
