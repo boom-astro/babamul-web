@@ -108,6 +108,10 @@ export default function Dashboard() {
     .finally(() => setRtaLoading(false));
   }, []);
 
+  const realtimeChartData = useMemo(() => {
+    return realtimeAlerts
+  }, [realtimeAlerts]);
+
   const visibleData = useMemo(() => {
     if (surveys.has("ztf") && surveys.has("lsst")) return statsData;
     return statsData.map((d) => ({
@@ -362,7 +366,7 @@ export default function Dashboard() {
         <CardContent>
         <Plot // updated to reflect multiple sources of input (for each survey) 
             type="line"
-            data={realtimeAlerts}
+            data={realtimeChartData}
             series={[
                 {
                     dataKey: "ztf", // need to config this as a function
