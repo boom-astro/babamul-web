@@ -58,9 +58,10 @@ export default function Dashboard() {
   const [topicsError, setTopicsError] = useState<string | null>(null);
 
   // Realtime alerts state
+  // note: removed rtaLoading, rtaError to avoid instatiation error; add back in once determined if necessary
   const [realtimeAlerts, setRealtimeAlerts] = useState<RealtimeAlertMetrics[]>([]);
-  const [rtaLoading, setRtaLoading] = useState(true);
-  const [rtaError, setRtaError] = useState<string | null>(null);
+  const [setRtaLoading] = useState(true);
+  const [setRtaError] = useState<string | null>(null);
 
   // Zoom: drag-select on chart to zoom, double-click to reset
   const [zoomLeft, setZoomLeft] = useState<string | null>(null);
