@@ -57,9 +57,10 @@ export default function Dashboard() {
   const [topicsError, setTopicsError] = useState<string | null>(null);
 
   // Realtime alerts state
+  // note: removed rtaLoading, rtaError bc not being used currently
   const [realtimeAlerts, setRealtimeAlerts] = useState<RealtimeAlertMetrics[]>([]);
-  const [rtaLoading, setRtaLoading] = useState(true);
-  const [rtaError, setRtaError] = useState<string | null>(null);
+  const [, setRtaLoading] = useState(true);
+  const [, setRtaError] = useState<string | null>(null);
 
   // Zoom: drag-select on chart to zoom, double-click to reset
   const [zoomLeft, setZoomLeft] = useState<string | null>(null);
@@ -119,24 +120,26 @@ export default function Dashboard() {
       }
     >();
 
-    realtimeChartData.forEach((row) => {
-      if (!grouped.has(row.gathered_at)) {
-        grouped.set(row.gathered_at, {
-          time: new Date(row.gathered_at * 1000).toLocaleTimeString(),
-        });
-      }
-    });
+    realtimeAlerts.forEach((row: RealtimeAlertMetrics) => {
+    if (!grouped.has(row.gathered_at)) {
+      grouped.set(row.gathered_at, {
+        time: new Date(
+          row.gathered_at * 1000
+        ).toLocaleTimeString(),
+      });
+    }
 
     const point = grouped.get(row.gathered_at)!;
 
     point[row.survey.toLowerCase() as "ztf" | "lsst"] = 
       row.n_alerts;
+    });
  
 
   return Array.from(grouped.entries())
     .sort(([a], [b]) => a - b)
     .map(([, value]) => value);
-}, [realtimeChartData]);
+}, [realtimeAlerts]);
     
 
   const visibleData = useMemo(() => {
