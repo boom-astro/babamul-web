@@ -121,6 +121,7 @@ export default function Filters() {
   // Stable callback for FilterBuilder
   const handlePipelineTextChange = useCallback((text: string) => {
     setPipelineText(text);
+    setCountResult(null);
   }, []);
 
   // Schema state
@@ -142,10 +143,6 @@ export default function Filters() {
   const [loading, setLoading] = useState(false);
   const [countLoading, setCountLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setCountResult(null);
-  }, [pipelineText, startJd, endJd, survey, limit]);
 
   // Load schema on mount and survey change (falls back to hardcoded schema)
   useEffect(() => {
@@ -274,7 +271,7 @@ export default function Filters() {
                     <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                       <div className="sm:col-span-4">
                         <Label className="text-xs font-medium mb-1 block text-muted-foreground">Survey</Label>
-                        <Select value={survey} onValueChange={(v) => setSurvey(v as "ZTF" | "LSST")}>
+                        <Select value={survey} onValueChange={(v) => { setSurvey(v as "ZTF" | "LSST"); setCountResult(null); }}>
                           <SelectTrigger className="w-full">
                             <SelectValue />
                           </SelectTrigger>
@@ -303,18 +300,18 @@ export default function Filters() {
                     <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                       <div className="sm:col-span-2">
                         <Label htmlFor="startJd" className="text-xs font-medium mb-1 block text-muted-foreground">Start JD</Label>
-                        <Input id="startJd" type="number" step="any" value={startJd} onChange={(e) => setStartJd(e.target.value)} placeholder="2461404.5" />
+                        <Input id="startJd" type="number" step="any" value={startJd} onChange={(e) => { setStartJd(e.target.value); setCountResult(null); }} placeholder="2461404.5" />
                       </div>
                       <div className="sm:col-span-2">
                         <Label htmlFor="endJd" className="text-xs font-medium mb-1 block text-muted-foreground">End JD</Label>
-                        <Input id="endJd" type="number" step="any" value={endJd} onChange={(e) => setEndJd(e.target.value)} placeholder="2461406.5" />
+                        <Input id="endJd" type="number" step="any" value={endJd} onChange={(e) => { setEndJd(e.target.value); setCountResult(null); }} placeholder="2461406.5" />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                       <div className="sm:col-span-2">
                         <Label htmlFor="limit" className="text-xs font-medium mb-1 block text-muted-foreground">Result Limit</Label>
-                        <Input id="limit" type="number" value={limit} onChange={(e) => setLimit(e.target.value)} placeholder="10" />
+                        <Input id="limit" type="number" value={limit} onChange={(e) => { setLimit(e.target.value); setCountResult(null); }} placeholder="10" />
                       </div>
                     </div>
 
