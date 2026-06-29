@@ -21,17 +21,18 @@ const largeDeps = [
 ]
 
 // https://vite.dev/config/
-export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), '')
+export default defineConfig(({mode}) => {
+  // loadEnv reads .env files
+  const env = loadEnv(mode, process.cwd(), "")
 
-  // Strip trailing slashes so `target + rewritten path` never yields a double slash.
-  const stripSlash = (s: string) => s.replace(/\/+$/, '')
-  const apiTarget = stripSlash(env.VITE_API_PROXY_TARGET || 'http://localhost:4000')
-  // Sandbox dev target: explicit VITE_SANDBOX_API_PROXY_TARGET wins, then the
-  // runtime/prod BOOM_SANDBOX_API__DOMAIN, then fall back to the main API.
-  const sandboxTarget = stripSlash(
-    env.VITE_SANDBOX_API_PROXY_TARGET || env.BOOM_SANDBOX_API__DOMAIN || apiTarget
-  )
+    // Strip trailing slashes so `target + rewritten path` never yields a double slash.
+    const stripSlash = (s: string) => s.replace(/\/+$/, '')
+    const apiTarget = stripSlash(env.VITE_API_PROXY_TARGET || 'http://localhost:4000')
+    // Sandbox dev target: explicit VITE_SANDBOX_API_PROXY_TARGET wins, then the
+    // runtime/prod BOOM_SANDBOX_API__DOMAIN, then fall back to the main API.
+    const sandboxTarget = stripSlash(
+        env.VITE_SANDBOX_API_PROXY_TARGET || env.BOOM_SANDBOX_API__DOMAIN || apiTarget
+    )
 
   return {
     plugins: [react(), tailwindcss()],
@@ -56,7 +57,7 @@ export default defineConfig(({ mode }) => {
               for (const dep of mermaidChunk) {
                 if (id.includes(dep)) return "mermaid"
               }
-              
+
               // Large dependencies in their own chunks to avoid bloating vendor
               for (const dep of largeDeps) {
                 if (id.includes(dep)) return dep
@@ -97,4 +98,3 @@ export default defineConfig(({ mode }) => {
     },
   }
 })
-
