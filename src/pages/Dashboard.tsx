@@ -220,7 +220,7 @@ export default function Dashboard() {
   }
 
 
-  console.log(realtimeChartData)
+  console.log("Realtime Data:", realtimeChartData)
   
   return (
     <div className="px-4 lg:px-6 space-y-4">
