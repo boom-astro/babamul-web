@@ -134,8 +134,9 @@ export default function Dashboard() {
     point[row.survey.toLowerCase() as "ztf" | "lsst"] = 
       row.n_alerts;
     });
- 
-
+    
+  console.log("Rows:", rows);
+    
   return Array.from(grouped.entries())
     .sort(([a], [b]) => a - b)
     .map(([, value]) => value);
@@ -219,12 +220,6 @@ export default function Dashboard() {
     if (!m) return { survey: "", type: name };
     return { survey: m[1], type: ALERT_TYPE_LABELS[m[2]] ?? m[2] };
   }
-
-  // test for realtime dashboard
-  const rows = await getRealtimeAlerts();
-
-  console.log("Rows:", rows);
-  console.log("Row count:", rows.length);
 
   
   return (
