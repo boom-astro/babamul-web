@@ -135,8 +135,6 @@ export default function Dashboard() {
       row.n_alerts;
     });
     
-  console.log("Rows:", rows);
-    
   return Array.from(grouped.entries())
     .sort(([a], [b]) => a - b)
     .map(([, value]) => value);
@@ -221,6 +219,8 @@ export default function Dashboard() {
     return { survey: m[1], type: ALERT_TYPE_LABELS[m[2]] ?? m[2] };
   }
 
+
+  console.log(realtimeChartData)
   
   return (
     <div className="px-4 lg:px-6 space-y-4">
