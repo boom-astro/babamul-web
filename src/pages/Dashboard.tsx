@@ -220,6 +220,13 @@ export default function Dashboard() {
     return { survey: m[1], type: ALERT_TYPE_LABELS[m[2]] ?? m[2] };
   }
 
+  // test for realtime dashboard
+  const rows = await getRealtimeAlerts();
+
+  console.log("Rows:", rows);
+  console.log("Row count:", rows.length);
+
+  
   return (
     <div className="px-4 lg:px-6 space-y-4">
       <div className="flex items-center justify-between">
@@ -384,13 +391,11 @@ export default function Dashboard() {
         </CardContent>
       </Card>
 
-      // ADDED BY SANJEEV - 6/4
       <Card>
         <CardHeader>
           <CardTitle>Real-Time Alerts for {todayUTC} </CardTitle>
         </CardHeader>
-        
-        
+      
         <CardContent>
           <ChartContainer config={{}}>
             <LineChart data={realtimeChartData}>
