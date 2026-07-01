@@ -121,6 +121,7 @@ export default function Filters() {
   // Stable callback for FilterBuilder
   const handlePipelineTextChange = useCallback((text: string) => {
     setPipelineText(text);
+    setCountResult(null);
   }, []);
 
   // Schema state
@@ -171,6 +172,15 @@ export default function Filters() {
     return params;
   }
 
+  function fetchTotalForWindow(): Promise<void> {
+    if (!startJd || !endJd) return Promise.resolve();
+    setTotalCountLoading(true);
+    return api.fetchTotalAlertCount(survey, parseFloat(startJd), parseFloat(endJd), { [survey]: [1] })
+      .then((c) => setTotalCount(c))
+      .catch(() => setTotalCount(null))
+      .finally(() => setTotalCountLoading(false));
+  }
+
   async function handleCount() {
     const { valid, error: validationError, pipeline } = validatePipeline(pipelineText);
     if (!valid || !pipeline) {
@@ -179,8 +189,12 @@ export default function Filters() {
     }
     setError(null);
     setCountLoading(true);
+    setTotalCount(null);
     try {
-      const result = await api.fetchFilterTestCount(buildParams(pipeline));
+      const [result] = await Promise.all([
+        api.fetchFilterTestCount(buildParams(pipeline)),
+        fetchTotalForWindow(),
+      ]);
       setCountResult(result);
     } catch (err) {
       setError(friendlyError(err, "Filter count failed"));
@@ -204,17 +218,9 @@ export default function Filters() {
     try {
       const params = buildParams(pipeline);
       // Fire both requests in parallel: filter results + total count
-      let totalCountPromise: Promise<void> = Promise.resolve();
-      if (startJd && endJd) {
-        setTotalCountLoading(true);
-        totalCountPromise = api.fetchTotalAlertCount(survey, parseFloat(startJd), parseFloat(endJd), { [survey]: [1] })
-          .then((c) => setTotalCount(c))
-          .catch(() => setTotalCount(null))
-          .finally(() => setTotalCountLoading(false));
-      }
       const [data] = await Promise.all([
         api.fetchFilterTest(params),
-        totalCountPromise,
+        fetchTotalForWindow(),
       ]);
       setQueryTimeMs(Math.round(performance.now() - t0));
       setResults(data);
@@ -265,7 +271,7 @@ export default function Filters() {
                     <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                       <div className="sm:col-span-4">
                         <Label className="text-xs font-medium mb-1 block text-muted-foreground">Survey</Label>
-                        <Select value={survey} onValueChange={(v) => setSurvey(v as "ZTF" | "LSST")}>
+                        <Select value={survey} onValueChange={(v) => { setSurvey(v as "ZTF" | "LSST"); setCountResult(null); }}>
                           <SelectTrigger className="w-full">
                             <SelectValue />
                           </SelectTrigger>
@@ -294,18 +300,18 @@ export default function Filters() {
                     <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                       <div className="sm:col-span-2">
                         <Label htmlFor="startJd" className="text-xs font-medium mb-1 block text-muted-foreground">Start JD</Label>
-                        <Input id="startJd" type="number" step="any" value={startJd} onChange={(e) => setStartJd(e.target.value)} placeholder="2461404.5" />
+                        <Input id="startJd" type="number" step="any" value={startJd} onChange={(e) => { setStartJd(e.target.value); setCountResult(null); }} placeholder="2461404.5" />
                       </div>
                       <div className="sm:col-span-2">
                         <Label htmlFor="endJd" className="text-xs font-medium mb-1 block text-muted-foreground">End JD</Label>
-                        <Input id="endJd" type="number" step="any" value={endJd} onChange={(e) => setEndJd(e.target.value)} placeholder="2461406.5" />
+                        <Input id="endJd" type="number" step="any" value={endJd} onChange={(e) => { setEndJd(e.target.value); setCountResult(null); }} placeholder="2461406.5" />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                       <div className="sm:col-span-2">
                         <Label htmlFor="limit" className="text-xs font-medium mb-1 block text-muted-foreground">Result Limit</Label>
-                        <Input id="limit" type="number" value={limit} onChange={(e) => setLimit(e.target.value)} placeholder="10" />
+                        <Input id="limit" type="number" value={limit} onChange={(e) => { setLimit(e.target.value); setCountResult(null); }} placeholder="10" />
                       </div>
                     </div>
 
