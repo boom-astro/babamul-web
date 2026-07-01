@@ -25,14 +25,14 @@ export default defineConfig(({mode}) => {
   // loadEnv reads .env files
   const env = loadEnv(mode, process.cwd(), "")
 
-    // Strip trailing slashes so `target + rewritten path` never yields a double slash.
-    const stripSlash = (s: string) => s.replace(/\/+$/, '')
-    const apiTarget = stripSlash(env.VITE_API_PROXY_TARGET || 'http://localhost:4000')
-    // Sandbox dev target: explicit VITE_SANDBOX_API_PROXY_TARGET wins, then the
-    // runtime/prod BOOM_SANDBOX_API__DOMAIN, then fall back to the main API.
-    const sandboxTarget = stripSlash(
-        env.VITE_SANDBOX_API_PROXY_TARGET || env.BOOM_SANDBOX_API__DOMAIN || apiTarget
-    )
+  // Strip trailing slashes so `target + rewritten path` never yields a double slash.
+  const stripSlash = (s: string) => s.replace(/\/+$/, '')
+  const apiTarget = stripSlash(env.VITE_API_PROXY_TARGET || 'http://localhost:4000')
+  // Sandbox dev target: explicit VITE_SANDBOX_API_PROXY_TARGET wins, then the
+  // runtime/prod BOOM_SANDBOX_API__DOMAIN, then fall back to the main API.
+  const sandboxTarget = stripSlash(
+    env.VITE_SANDBOX_API_PROXY_TARGET || env.BOOM_SANDBOX_API__DOMAIN || apiTarget
+  )
 
   return {
     plugins: [react(), tailwindcss()],
