@@ -218,9 +218,6 @@ export default function Dashboard() {
     if (!m) return { survey: "", type: name };
     return { survey: m[1], type: ALERT_TYPE_LABELS[m[2]] ?? m[2] };
   }
-
-
-  console.log("Realtime Data:", realtimeChartData)
   
   return (
     <div className="px-4 lg:px-6 space-y-4">
