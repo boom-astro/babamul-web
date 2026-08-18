@@ -393,7 +393,6 @@ export default function Dashboard() {
             <LineChart data={realtimeChartData}>
               <CartesianGrid strokeDasharray="3 3" />
 
-              // TODO: config these with labels
               <XAxis dataKey = "time" />
               <YAxis />
 
