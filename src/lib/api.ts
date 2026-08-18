@@ -413,9 +413,9 @@ export async function fetchTopics(): Promise<TopicInfo[]> {
 
 // Fetch realtime alert metrics from the backend stats/kafka handler.
 // The backend queries OTel metrics and returns them as JSON with gathered timestamp.
-// See: api/babamul/stats/kafka.rs
+// See: api/babamul/stats/realtime.rs
 export async function fetchRealtimeAlerts(): Promise<RealtimeAlertMetrics[]> {
-  const url = `${API_BASE}/stats/kafka`;
+  const url = `${API_BASE}/stats/realtime`;
   const res = await fetch(url);
   if (!res.ok) {
     const txt = await res.text().catch(() => "");
@@ -509,4 +509,5 @@ export default {
   fetchObjCutouts,
   fetchStats,
   fetchCollectionStats,
+  fetchRealtimeAlerts
 };
