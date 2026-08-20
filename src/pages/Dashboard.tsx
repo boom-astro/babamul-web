@@ -57,10 +57,9 @@ export default function Dashboard() {
   const [topicsError, setTopicsError] = useState<string | null>(null);
 
   // Realtime alerts state
-  // note: removed rtaLoading, rtaError bc not being used currently
   const [realtimeAlerts, setRealtimeAlerts] = useState<RealtimeAlertMetrics[]>([]);
-  const [, setRtaLoading] = useState(true);
-  const [, setRtaError] = useState<string | null>(null);
+  const [rtaLoading, setRtaLoading] = useState(true);
+  const [rtaError, setRtaError] = useState<string | null>(null);
 
   // Zoom: drag-select on chart to zoom, double-click to reset
   const [zoomLeft, setZoomLeft] = useState<string | null>(null);
@@ -104,9 +103,9 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchRealtimeAlerts()
-    .then(setRealtimeAlerts)
-    .catch((e) => setRtaError(e instanceof Error ? e.message : "Failed to fetch realtime alerts"))
-    .finally(() => setRtaLoading(false));
+      .then(setRealtimeAlerts)
+      .catch((e) => setRtaError(e instanceof Error ? e.message : "Failed to fetch realtime alerts"))
+      .finally(() => setRtaLoading(false));
   }, []);
 
   // gathering realtime data
@@ -121,24 +120,24 @@ export default function Dashboard() {
     >();
 
     realtimeAlerts.forEach((row: RealtimeAlertMetrics) => {
-    if (!grouped.has(row.gathered_at)) {
-      grouped.set(row.gathered_at, {
-        time: new Date(
-          row.gathered_at * 1000
-        ).toLocaleTimeString(),
-      });
-    }
+      if (!grouped.has(row.gathered_at)) {
+        grouped.set(row.gathered_at, {
+          time: new Date(
+            row.gathered_at * 1000
+          ).toLocaleTimeString(),
+        });
+      }
 
-    const point = grouped.get(row.gathered_at)!;
+      const point = grouped.get(row.gathered_at)!;
 
-    point[row.survey.toLowerCase() as "ztf" | "lsst"] = 
-      row.n_alerts;
+      point[row.survey.toLowerCase() as "ztf" | "lsst"] = 
+        row.n_alerts;
     });
     
-  return Array.from(grouped.entries())
-    .sort(([a], [b]) => a - b)
-    .map(([, value]) => value);
-}, [realtimeAlerts]);
+    return Array.from(grouped.entries())
+      .sort(([a], [b]) => a - b)
+      .map(([, value]) => value);
+  }, [realtimeAlerts]);
     
 
   const visibleData = useMemo(() => {
@@ -385,35 +384,45 @@ export default function Dashboard() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Real-Time Alerts for {todayUTC} </CardTitle>
+          <CardTitle>Real-Time Alerts for {todayUTC}</CardTitle>
         </CardHeader>
       
         <CardContent>
-          <ChartContainer config={{}}>
-            <LineChart data={realtimeChartData}>
-              <CartesianGrid strokeDasharray="3 3" />
+          {rtaError && <p className="text-sm text-destructive mb-4">{rtaError}</p>}
+          {!rtaLoading ? (
+            realtimeChartData.length > 0 ? (
+              <ChartContainer config={{}}>
+                <LineChart data={realtimeChartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
 
-              <XAxis dataKey = "time" />
-              <YAxis />
+                  <XAxis dataKey="time" />
+                  <YAxis />
 
-              <ChartTooltip />
+                  <ChartTooltip />
 
-              <Line
-                type="monotone"
-                dataKey="ztf"
-                name="ZTF"
-              />
+                  <Line
+                    type="monotone"
+                    dataKey="ztf"
+                    name="ZTF"
+                  />
 
-              <Line 
-                  type="monotone"
-                  dataKey="lsst"
-                  name="LSST"
-              />
-              
-            </LineChart>
-          </ChartContainer>
+                  <Line 
+                    type="monotone"
+                    dataKey="lsst"
+                    name="LSST"
+                  />
+                </LineChart>
+              </ChartContainer>
+            ) : (
+              <div className="h-40 w-full flex items-center justify-center text-muted-foreground">
+                No realtime alert data available
+              </div>
+            )
+          ) : (
+            <div className="h-40 w-full shimmer" />
+          )}
         </CardContent>
-    </Card>
+      </Card>
       
       <Card>
         <CardHeader>
